@@ -9,7 +9,7 @@
         // 工具主體 DOM ID (僅在需要創建根元素時使用，這裡主要用於 CSS 隔離)
         TOOL_ID: 'planCodeQueryToolInstance',
         STYLE_ID: 'planCodeToolStyle',
-        VERSION: '3.6.0', // 最新版本號
+        VERSION: '3.8.0', // 最新版本號，已修正日期格式
 
         // 查詢模式枚舉，增加可讀性與維護性
         QUERY_MODES: {
@@ -24,8 +24,8 @@
 
         // API 端點
         API_ENDPOINTS: {
-            UAT: '[https://euisv-uat.apps.tocp4.kgilife.com.tw/euisw/euisbq/api](https://euisv-uat.apps.tocp4.kgilife.com.tw/euisw/euisbq/api)',
-            PROD: '[https://euisv.apps.ocp4.kgilife.com.tw/euisw/euisbq/api](https://euisv.apps.ocp4.kgilife.com.tw/euisw/euisbq/api)'
+            UAT: 'https://euisv-uat.apps.tocp4.kgilife.com.tw/euisw/euisbq/api',
+            PROD: 'https://euisv.apps.ocp4.kgilife.com.tw/euisw/euisbq/api'
         },
 
         // 銷售狀態定義，用於 UI 顯示和邏輯判斷
@@ -388,7 +388,10 @@
                 max-height: 55vh; /* 調整表格最大高度以適應 Modal */
                 overflow: auto; /* 僅表格內容滾動 */
                 margin: 15px 0;
-                /* 移除外層陰影和邊框，以符合示意圖和 planE.txt 的簡潔風格 */
+                /* 為了讓表格邊框清晰可見，為整個表格區域添加邊框 */
+                border: 1px solid #ddd; /* 嚴格遵循 planE.txt 的 #ddd 邊框 */
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* 微弱的整體陰影 */
+                border-radius: var(--border-radius-base); /* 外部容器圓角 */
             }
             .pct-table {
                 border-collapse: collapse; /* Collapse borders for continuous lines */
@@ -481,21 +484,31 @@
 
             .pct-pagination {
                 display: flex;
-                justify-content: flex-end; /* 按鈕靠右 */
+                /* 修正：justify-content: space-between 確保資訊在左，按鈕在右 */
+                justify-content: space-between;
                 align-items: center;
                 gap: 10px; /* 按鈕間距 */
                 margin-top: 15px;
                 flex-wrap: wrap;
             }
             .pct-pagination-info {
-                margin-right: auto; /* 將資訊推到左側 */
+                /* 移除 margin-right: auto; 因為 space-between 已經處理了 */
                 font-size: 14px;
                 color: var(--text-color-light);
+                /* 確保在小螢幕上分頁資訊不會被按鈕擠壓 */
+                flex-shrink: 0;
             }
             /* 調整分頁按鈕大小 */
             .pct-pagination .pct-btn {
                 padding: 6px 12px;
                 font-size: 13px;
+            }
+            /* 修正：為分頁按鈕組添加一個容器，以更好控制對齊 */
+            .pct-pagination-controls-group {
+                display: flex;
+                gap: 8px; /* 分頁按鈕之間的間距 */
+                flex-wrap: wrap;
+                justify-content: flex-end; /* 確保分頁按鈕靠右對齊 */
             }
 
 
@@ -567,6 +580,12 @@
                 .pct-pagination .pct-btn {
                     width: 100%;
                 }
+                /* 修正：在小螢幕下，功能按鈕組也應該堆疊 */
+                .pct-pagination-controls-group {
+                     flex-direction: column;
+                     align-items: stretch;
+                     width: 100%;
+                }
             }
         `;
 
@@ -592,12 +611,7 @@
             footer = '',
             onOpen
         }) {
-            // 在顯示新 Modal 前，確保舊的 Modal 已完全關閉並清理
-            // 由於 closeModal 現在返回 Promise，我們需要等待它完成
-            // 但在這裡直接呼叫 showModal，表示每次都會先觸發關閉。
-            // 解決方式是讓 closeModal 內部處理好其狀態清除。
-            // 這裡保留原來的直接調用，因為 closeModal 已修改為 Promise。
-            closeModal();
+            closeModal(); // 確保每次只顯示一個 Modal
 
             // 創建遮罩和 Modal 容器
             const mask = document.createElement('div');
@@ -1537,19 +1551,28 @@
         // 重新處理所有數據以更新表格（例如，一鍵查詢詳情後）
         async updateAllDetailsAndRefreshTable() {
             UIManager.showToast('批次查詢詳細資料中...', 'info');
+
+            // 檢查是否有資料可供查詢詳情
+            if (this.allData.length === 0) {
+                UIManager.showToast('沒有資料可供查詢詳情。', 'warning');
+                return; // 沒有資料，直接結束
+            }
+
             // 清空詳情和通路快取，強制重新查詢所有數據
             this.cacheDetail.clear();
             this.cacheChannel.clear();
+
             // 重新處理所有原始數據，會再次觸發詳情和通路查詢
             await this.processAllDataForTable();
 
-            // 修正：只有當有數據時才顯示「完成」提示
+            // 判斷是否仍然有數據來顯示「完成」提示
             if (this.allData.length > 0) {
                 this.renderTable(); // 重新渲染表格
                 UIManager.showToast('批次查詢詳細資料完成', 'success');
             } else {
-                this.renderTable(); // 即使沒數據也要重新渲染，顯示「查無資料」
-                UIManager.showToast('批次查詢完成，但沒有可更新詳情的資料', 'warning');
+                // 如果在處理過程中數據變為空（不太可能，除非 API 全部失效）
+                this.renderTable(); // 重新渲染，顯示「查無資料」
+                UIManager.showToast('批次查詢完成，但沒有可用的詳細資料。', 'warning');
             }
         },
 
@@ -1570,8 +1593,10 @@
                 title: `查詢結果（${this.envLabel()}）`,
                 body: this.renderSummary(displayedData, hasSpecialData) + this.renderTableHTML(pageData),
                 footer: `
-                    <button class="pct-btn pct-btn-secondary" id="pct-table-prev" ${!hasPrev ? 'disabled' : ''}>上一頁</button>
-                    <button class="pct-btn pct-btn-secondary" id="pct-table-next" ${!hasNext ? 'disabled' : ''}>下一頁</button>
+                    <div class="pct-pagination-controls-group">
+                        <button class="pct-btn pct-btn-secondary" id="pct-table-prev" ${!hasPrev ? 'disabled' : ''}>上一頁</button>
+                        <button class="pct-btn pct-btn-secondary" id="pct-table-next" ${!hasNext ? 'disabled' : ''}>下一頁</button>
+                    </div>
                     <div class="pct-pagination-info">第 ${this.pageNo} 頁 / 共 ${totalPages} 頁 (總計 ${displayedData.length} 筆)</div>
                     <div style="flex-grow:1;"></div> <!-- Spacer for alignment -->
                     <button class="pct-btn pct-btn-info" id="pct-table-detail">一鍵查詢全部詳細</button>
@@ -1788,18 +1813,37 @@
             return `${d.getFullYear()}${('0' + (d.getMonth() + 1)).slice(-2)}${('0' + d.getDate()).slice(-2)}`;
         },
 
+        /**
+         * 內部輔助函數：將日期字串格式化為 YYYY-MM-DD，用於 Date 對象的穩定解析。
+         * @param {string} dt - 日期時間字串 (e.g., "YYYY-MM-DD HH:MM:SS" 或 "YYYYMMDD")
+         * @returns {string} 格式化後的日期 (YYYY-MM-DD)
+         */
+        _formatToIsoDateForDateObject(dt) {
+            if (!dt) return '';
+            const cleanDate = String(dt).split(' ')[0].replace(/\D/g, ''); // 獲取 YYYYMMDD
+            if (cleanDate.length >= 8) {
+                return cleanDate.substring(0, 4) + '-' + cleanDate.substring(4, 6) + '-' + cleanDate.substring(6, 8);
+            }
+            return String(dt); // Fallback for unexpected formats, Date() might still parse
+        },
+
+        /**
+         * 格式化日期字串為 YYYYMMDD (半形 8 碼)，用於顯示。
+         * @param {string} dt - 日期時間字串 (e.g., "YYYY-MM-DD HH:MM:SS" 或 "YYYYMMDD")
+         * @returns {string} 格式化後的日期 (YYYYMMDD)
+         */
         formatDate(dt) {
             if (!dt) return '';
-            // 處理 "YYYY-MM-DD HH:MM:SS" 或 "YYYYMMDD"
-            const datePart = String(dt).split(' ')[0];
-            return datePart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+            const datePart = String(dt).split(' ')[0]; // "YYYY-MM-DD" or "YYYYMMDD"
+            return datePart.replace(/\D/g, '').substring(0, 8); // 移除所有非數字並取前 8 碼
         },
 
         getSaleStatus(todayStr, saleStartStr, saleEndStr) {
             if (!saleStartStr || !saleEndStr) return '';
-            const today = new Date(this.formatDate(todayStr));
-            const saleStartDate = new Date(this.formatDate(saleStartStr));
-            const saleEndDate = new Date(this.formatDate(saleEndStr));
+            // 使用 _formatToIsoDateForDateObject 確保 Date 對象能穩定解析
+            const today = new Date(this._formatToIsoDateForDateObject(todayStr));
+            const saleStartDate = new Date(this._formatToIsoDateForDateObject(saleStartStr));
+            const saleEndDate = new Date(this._formatToIsoDateForDateObject(saleEndStr));
 
             if (isNaN(today.getTime()) || isNaN(saleStartDate.getTime()) || isNaN(saleEndDate.getTime())) {
                 return '日期格式錯誤'; // 處理無效日期格式
@@ -1890,8 +1934,9 @@
 
             // 3. 通路銷售迄日晚於主檔銷售訖日
             if (channels.some(c => {
-                    const mainEndDate = new Date(this.formatDate(item.saleEndDate));
-                    const channelEndDate = new Date(this.formatDate(c.rawEnd));
+                    // 使用 _formatToIsoDateForDateObject 進行可靠的日期比較
+                    const mainEndDate = new Date(this._formatToIsoDateForDateObject(item.saleEndDate));
+                    const channelEndDate = new Date(this._formatToIsoDateForDateObject(c.rawEnd));
                     return !isNaN(mainEndDate.getTime()) && !isNaN(channelEndDate.getTime()) &&
                         mainEndDate.getTime() < channelEndDate.getTime();
                 })) {
@@ -1900,8 +1945,9 @@
 
             // 4. 通路銷售起日早於主檔銷售起日
             if (channels.some(c => {
-                    const mainStartDate = new Date(this.formatDate(item.saleStartDate));
-                    const channelStartDate = new Date(this.formatDate(c.saleStartDate));
+                    // 使用 _formatToIsoDateForDateObject 進行可靠的日期比較
+                    const mainStartDate = new Date(this._formatToIsoDateForDateObject(item.saleStartDate));
+                    const channelStartDate = new Date(this._formatToIsoDateForDateObject(c.saleStartDate));
                     return !isNaN(mainStartDate.getTime()) && !isNaN(channelStartDate.getTime()) &&
                         mainStartDate.getTime() > channelStartDate.getTime();
                 })) {
