@@ -1,21 +1,17 @@
 /**
  * @name KGI Life Case Query Tool
- * @version vFinal-Enhanced (Refactored + Features)
- * @description 一個用於查詢凱基人壽案件進度的瀏覽器書籤工具。此版本為最終增強版，包含可中斷的查詢流程與單筆錯誤重試機制。
+ * @version vFinal-Corrected (Refactored + Features)
+ * @description 一個用於查詢凱基人壽案件進度的瀏覽器書籤工具。此版本為經過修正的最終增強版，包含所有討論的功能。
  * @author Refactored by 資深 JavaScript 架構師與 UI/UX 顧問
  * @license MIT
  */
 javascript: (async function() {
     "use strict";
 
-    // --- Core Constants Module ---
+    // --- 1. Constants Module ---
     const Constants = (function() {
-        const TOOL_MAIN_CONTAINER_ID = 'kgilifeQueryToolMainContainer_vFinalEnhanced';
-        const Z_INDEX = {
-            OVERLAY: 2147483640,
-            MAIN_UI: 2147483630,
-            NOTIFICATION: 2147483647
-        };
+        const TOOL_MAIN_CONTAINER_ID = 'kgilifeQueryToolMainContainer_vFinalCorrected';
+        const Z_INDEX = { OVERLAY: 2147483640, MAIN_UI: 2147483630, NOTIFICATION: 2147483647 };
         const API = {
             URL_UAT: 'https://euisv-uat.apps.tocp4.kgilife.com.tw/euisw/euisb/api/caseQuery/query',
             URL_PROD: 'https://euisv.apps.ocp4.kgilife.com.tw/euisw/euisb/api/caseQuery/query',
@@ -44,50 +40,131 @@ javascript: (async function() {
             { id: 'K', label: 'K-高雄', color: '#e83e8c' }, { id: 'UNDEF', label: '查無單位', color: '#546e7a' }
         ];
         const UNIT_MAP_FIELD_API_KEY = 'uwApproverUnit';
-        const A17_TEXT_SETTINGS_STORAGE_KEY = 'kgilifeQueryTool_A17TextSettings_v3';
+        const A17_TEXT_SETTINGS_STORAGE_KEY = 'kgilifeQueryTool_A17TextSettings_v4';
         const A17_DEFAULT_TEXT_CONTENT = "DEAR,\n\n依據【管理報表：A17 新契約異常帳務】所載內容，報表中列示之送金單號碼，涉及多項帳務異常情形，例如：溢繳、短收、取消件需退費、以及無相對應之案件等問題。\n\n本週我們已逐筆查詢該等異常帳務，結果顯示，這些送金單應對應至下表所列之新契約案件。為利後續帳務處理，敬請協助確認各案件之實際帳務狀況，並如有需調整或處理事項，請一併協助辦理，謝謝。";
-
         return Object.freeze({
-            TOOL_MAIN_CONTAINER_ID, Z_INDEX, API, QUERYABLE_FIELD_DEFINITIONS,
-            FIELD_DISPLAY_NAMES_MAP, ALL_DISPLAY_FIELDS_API_KEYS_MAIN,
-            UNIT_CODE_MAPPINGS, A17_UNIT_BUTTONS_DEFS, UNIT_MAP_FIELD_API_KEY,
-            A17_TEXT_SETTINGS_STORAGE_KEY, A17_DEFAULT_TEXT_CONTENT
+            TOOL_MAIN_CONTAINER_ID, Z_INDEX, API, QUERYABLE_FIELD_DEFINITIONS, FIELD_DISPLAY_NAMES_MAP,
+            ALL_DISPLAY_FIELDS_API_KEYS_MAIN, UNIT_CODE_MAPPINGS, A17_UNIT_BUTTONS_DEFS,
+            UNIT_MAP_FIELD_API_KEY, A17_TEXT_SETTINGS_STORAGE_KEY, A17_DEFAULT_TEXT_CONTENT
         });
     })();
 
+    // --- 2. DataStore Module ---
     const DataStore = (function(Constants) {
         let state = {
             currentApiUrl: '',
             apiAuthToken: localStorage.getItem(Constants.API.TOKEN_STORAGE_KEY),
             selectedQueryDefinition: Constants.QUERYABLE_FIELD_DEFINITIONS[0],
             originalQueryResults: [],
-            isQueryCancelled: false,
+            baseA17MasterData: [],
+            isQueryCancelled: false, // For cancellation
             ui: {
                 mainUIElement: null, tableBodyElement: null, tableHeadElement: null,
-                currentHeaders: [],
+                a17UnitButtonsContainer: null, sortDirections: {}, currentHeaders: [],
+                isA17Mode: false, isEditMode: false,
             },
+            a17Mode: {
+                isActive: false, selectedUnits: new Set(),
+                textSettings: {
+                    mainContent: Constants.A17_DEFAULT_TEXT_CONTENT, mainFontSize: 12,
+                    mainLineHeight: 1.5, mainFontColor: '#333333', dateFontSize: 8,
+                    dateLineHeight: 1.2, dateFontColor: '#555555',
+                    genDateOffset: -3, compDateOffset: 0,
+                },
+            },
+            csvImport: {
+                fileName: '', rawHeaders: [], rawData: [], selectedColForQueryName: null,
+                selectedColsForA17Merge: [], isA17CsvPrepared: false,
+            },
+            drag: { dragging: false, startX: 0, startY: 0, initialX: 0, initialY: 0 },
+            timers: { a17ButtonLongPressTimer: null }
         };
-        const setApiAuthToken = (token) => {
-            state.apiAuthToken = token;
-            token ? localStorage.setItem(Constants.API.TOKEN_STORAGE_KEY, token) : localStorage.removeItem(Constants.API.TOKEN_STORAGE_KEY);
+
+        const loadA17TextSettings = () => {
+            const saved = localStorage.getItem(Constants.A17_TEXT_SETTINGS_STORAGE_KEY);
+            if (!saved) return;
+            try {
+                const parsed = JSON.parse(saved);
+                Object.assign(state.a17Mode.textSettings, parsed);
+            } catch (e) { console.error("載入A17文本設定失敗:", e); }
         };
-        const updateResultRow = (index, newRowData) => {
-            if (state.originalQueryResults[index]) {
-                state.originalQueryResults[index] = { ...state.originalQueryResults[index], ...newRowData };
-            }
-        };
+
         return {
             getState: () => state,
-            setApiAuthToken,
-            updateResultRow,
+            setApiAuthToken: (token) => {
+                state.apiAuthToken = token;
+                token ? localStorage.setItem(Constants.API.TOKEN_STORAGE_KEY, token) : localStorage.removeItem(Constants.API.TOKEN_STORAGE_KEY);
+            },
             cancelQuery: () => { state.isQueryCancelled = true; },
             resetQueryCancelFlag: () => { state.isQueryCancelled = false; },
             isQueryCancelled: () => state.isQueryCancelled,
+            updateResultRow: (index, newRowData) => {
+                if (state.originalQueryResults[index]) {
+                    state.originalQueryResults[index] = { ...state.originalQueryResults[index], ...newRowData };
+                }
+            },
+            loadA17TextSettings
         };
     })(Constants);
 
+    // --- 3. Utility Functions Module ---
+    const Utils = {
+        escapeHtml(unsafe) {
+            if (typeof unsafe !== 'string') return unsafe ?? '';
+            return unsafe.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]);
+        },
+        extractName(strVal) {
+            if (!strVal || typeof strVal !== 'string') return '';
+            const matchResult = strVal.match(/^[\u4e00-\u9fa5\uff0a*\u00b7\uff0e]+/);
+            return matchResult ? matchResult[0] : strVal.split(' ')[0];
+        },
+        getFirstLetter(unitString) {
+            if (!unitString || typeof unitString !== 'string') return 'Z';
+            for (const char of unitString) {
+                const upperChar = char.toUpperCase();
+                if (/[A-Z]/.test(upperChar)) return upperChar;
+            }
+            return 'Z';
+        },
+        formatDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}${m}${d}`;
+        }
+    };
+
+    // --- 4. API Service Module ---
+    const ApiService = (function(Constants, DataStore) {
+        async function performApiQuery(queryValue, apiKey) {
+            const { currentApiUrl, apiAuthToken } = DataStore.getState();
+            const reqBody = { currentPage: 1, pageSize: 10, [apiKey]: queryValue };
+            const fetchOpts = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reqBody),
+            };
+            if (apiAuthToken) fetchOpts.headers['SSO-TOKEN'] = apiAuthToken;
+            try {
+                const res = await fetch(currentApiUrl, fetchOpts);
+                if (res.status === 401) {
+                    DataStore.setApiAuthToken(null);
+                    return { error: 'token_invalid' };
+                }
+                if (!res.ok) throw new Error(`API Error: ${res.status}`);
+                const data = await res.json();
+                return { success: data?.records?.length > 0, data };
+            } catch (error) {
+                console.error(`查詢 ${queryValue} 失敗:`, error);
+                return { error: 'network_error' };
+            }
+        }
+        return { performApiQuery };
+    })(Constants, DataStore);
+
+    // --- 5. UI Manager (Dialogs, Notifications) Module ---
     const UIManager = (function(Constants) {
-        const createDialogBase = (idSuffix, contentHtml, onCancel) => {
+        function createDialogBase(idSuffix, contentHtml, onCancel) {
             const id = Constants.TOOL_MAIN_CONTAINER_ID + idSuffix;
             document.getElementById(id + '_overlay')?.remove();
             const overlay = document.createElement('div');
@@ -113,12 +190,16 @@ javascript: (async function() {
             }
             overlay.appendChild(dialog);
             document.body.appendChild(overlay);
-            const styleEl = document.createElement('style');
-            styleEl.textContent = `@keyframes qtDialogAppear{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}.qt-dialog-btn{border:none;padding:8px 15px;border-radius:4px;font-size:13px;cursor:pointer;margin-left:8px;}.qt-dialog-btn-red{background:#dc3545;color:white;}.qt-dialog-btn-green{background:#28a745;color:white;}.qt-dialog-btn-orange{background:#fd7e14;color:white;}.qt-dialog-btn-blue{background:#007bff;color:white;}.qt-dialog-btn-grey{background:#6c757d;color:white;}.qt-dialog-title{margin:0 0 15px 0;font-size:18px;text-align:center;font-weight:600;}.qt-input,.qt-textarea{width:calc(100% - 18px);padding:9px;border:1px solid #ccc;border-radius:4px;margin-bottom:15px;}.qt-textarea{min-height:70px;}.qt-dialog-flex-end{display:flex;justify-content:flex-end;margin-top:15px;}`;
-            dialog.appendChild(styleEl);
+            const styleEl = document.getElementById('qt-styles') || document.createElement('style');
+            if (!styleEl.id) {
+                styleEl.id = 'qt-styles';
+                styleEl.textContent = `@keyframes qtDialogAppear{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}.qt-dialog-btn{border:none;padding:8px 15px;border-radius:4px;font-size:13px;cursor:pointer;margin-left:8px;}.qt-dialog-btn-red{background:#dc3545;color:white;}.qt-dialog-btn-green{background:#28a745;color:white;}.qt-dialog-btn-orange{background:#fd7e14;color:white;}.qt-dialog-btn-blue{background:#007bff;color:white;}.qt-dialog-btn-grey{background:#6c757d;color:white;}.qt-dialog-title{margin:0 0 15px 0;font-size:18px;text-align:center;font-weight:600;}.qt-input,.qt-textarea{width:calc(100% - 18px);padding:9px;border:1px solid #ccc;border-radius:4px;margin-bottom:15px;}.qt-textarea{min-height:70px;}.qt-dialog-flex-end{display:flex;justify-content:flex-end;margin-top:15px;}`;
+                document.head.appendChild(styleEl);
+            }
             return { overlay, dialog };
         };
-        const displaySystemNotification = (message, isError = false, duration = 3000) => {
+
+        function displaySystemNotification(message, isError = false, duration = 3000) {
             const id = Constants.TOOL_MAIN_CONTAINER_ID + '_Notification';
             document.getElementById(id)?.remove();
             const n = document.createElement('div'); n.id = id;
@@ -127,72 +208,44 @@ javascript: (async function() {
             setTimeout(()=>n.style.transform='translateX(0)',50);
             setTimeout(()=>{n.style.transform='translateX(calc(100% + 25px))';setTimeout(()=>n.remove(),300)},duration);
         };
-        return { createDialogBase, displaySystemNotification };
-    })(Constants);
-    
-    const ApiService = (function(Constants, DataStore) {
-        async function performApiQuery(queryValue, apiKey) {
-            const state = DataStore.getState();
-            const reqBody = { currentPage: 1, pageSize: 10 };
-            reqBody[apiKey] = queryValue;
-            const fetchOpts = {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(reqBody),
-            };
-            if (state.apiAuthToken) fetchOpts.headers['SSO-TOKEN'] = state.apiAuthToken;
-            try {
-                const res = await fetch(state.currentApiUrl, fetchOpts);
-                if (res.status === 401) {
-                    DataStore.setApiAuthToken(null);
-                    return { error: 'token_invalid', data: null };
-                }
-                if (!res.ok) throw new Error(`API Error ${res.status}`);
-                const data = await res.json();
-                return { error: null, data: data, success: data?.records?.length > 0 };
-            } catch (e) {
-                return { error: 'network_error', data: null };
-            }
-        }
-        return { performApiQuery };
-    })(Constants, DataStore);
-    
-    const Controller = (function(Constants, DataStore, ApiService, UIManager) {
-        async function retrySingleQuery(rowIndex, buttonElement) {
-            const state = DataStore.getState();
-            const rowData = state.originalQueryResults[rowIndex];
-            if (!rowData) return;
-
-            buttonElement.textContent = '...';
-            buttonElement.disabled = true;
-
-            const queryValue = rowData[Constants.FIELD_DISPLAY_NAMES_MAP._queriedValue_];
-            const apiKey = state.selectedQueryDefinition.queryApiKey;
-            const apiResult = await ApiService.performApiQuery(queryValue, apiKey);
-            
-            let newStatus = '❌ 查詢失敗';
-            let updatedRowData = {};
-
-            if (apiResult.success) {
-                newStatus = '✔️ 成功 (重試)';
-                const rec = apiResult.data.records[0];
-                Constants.ALL_DISPLAY_FIELDS_API_KEYS_MAIN.forEach(dKey => {
-                    updatedRowData[Constants.FIELD_DISPLAY_NAMES_MAP[dKey] || dKey] = rec[dKey] ?? '';
+        
+        // This object holds all dialog creation logic
+        const dialogs = {
+            env: () => new Promise(resolve => {
+                const { overlay } = createDialogBase('_EnvSelect', `<h3 class="qt-dialog-title">選擇查詢環境</h3><div style="display:flex;gap:10px;justify-content:center;"><button id="qt-env-uat" class="qt-dialog-btn qt-dialog-btn-green">測試</button><button id="qt-env-prod" class="qt-dialog-btn qt-dialog-btn-orange">正式</button></div><div style="text-align:center;margin-top:15px;"><button id="qt-env-cancel" class="qt-dialog-btn qt-dialog-btn-grey">取消</button></div>`);
+                const close = val => { overlay.remove(); resolve(val); };
+                overlay.querySelector('#qt-env-uat').onclick = () => close('uat');
+                overlay.querySelector('#qt-env-prod').onclick = () => close('prod');
+                overlay.querySelector('#qt-env-cancel').onclick = () => close(null);
+            }),
+            token: () => new Promise(resolve => {
+                 const { overlay } = createDialogBase('_Token', `<h3 class="qt-dialog-title">API TOKEN 設定</h3><input type="password" id="qt-token-input" class="qt-input" placeholder="請輸入您的 API TOKEN"><div style="display:flex;justify-content:space-between;margin-top:15px;"><button id="qt-token-skip" class="qt-dialog-btn qt-dialog-btn-orange">略過</button><div><button id="qt-token-close-tool" class="qt-dialog-btn qt-dialog-btn-red">關閉</button><button id="qt-token-ok" class="qt-dialog-btn qt-dialog-btn-blue">確定</button></div></div>`);
+                 const input = overlay.querySelector('#qt-token-input');
+                 const close = val => { overlay.remove(); resolve(val); };
+                 overlay.querySelector('#qt-token-ok').onclick = () => close(input.value.trim());
+                 overlay.querySelector('#qt-token-close-tool').onclick = () => close('_close_');
+                 overlay.querySelector('#qt-token-skip').onclick = () => close('_skip_');
+            }),
+            query: () => new Promise(resolve => {
+                const state = DataStore.getState();
+                const queryButtons = Constants.QUERYABLE_FIELD_DEFINITIONS.map(d => `<button class="qt-dialog-btn" data-apikey="${d.queryApiKey}" style="background-color:${d.color};color:white;">${d.queryDisplayName}</button>`).join('');
+                const { overlay } = createDialogBase('_QuerySetup', `<h3 class="qt-dialog-title">查詢條件設定</h3><div>${queryButtons}</div><textarea id="qt-queryvalues-input" class="qt-textarea" placeholder="輸入查詢值..."></textarea><div class="qt-dialog-flex-end"><button class="qt-dialog-btn qt-dialog-btn-grey" id="cancel">取消</button><button class="qt-dialog-btn qt-dialog-btn-blue" id="ok">開始查詢</button></div>`);
+                const input = overlay.querySelector('#qt-queryvalues-input');
+                const close = val => { overlay.remove(); resolve(val); };
+                overlay.querySelector('#ok').onclick = () => close({ queryValues: input.value.trim() });
+                overlay.querySelector('#cancel').onclick = () => close(null);
+                overlay.querySelectorAll('[data-apikey]').forEach(btn => btn.onclick = () => {
+                    state.selectedQueryDefinition = Constants.QUERYABLE_FIELD_DEFINITIONS.find(d => d.queryApiKey === btn.dataset.apikey);
+                    UIManager.displaySystemNotification(`已選擇: ${state.selectedQueryDefinition.queryDisplayName}`, false, 1500);
                 });
-            } else if (apiResult.error === 'token_invalid') {
-                newStatus = '❌ TOKEN失效';
-            } else if (!apiResult.error) {
-                newStatus = '➖ 查無資料 (重試)';
-            }
-            
-            updatedRowData[Constants.FIELD_DISPLAY_NAMES_MAP._apiQueryStatus] = newStatus;
-            DataStore.updateResultRow(rowIndex, updatedRowData);
-            TableRenderer.populateTableRows(state.originalQueryResults);
-        }
-        return { retrySingleQuery };
-    })(Constants, DataStore, ApiService, UIManager);
+            })
+        };
+        
+        return { displaySystemNotification, dialogs, createDialogBase };
+    })(Constants);
 
-    const TableRenderer = (function(Constants, DataStore, Controller) {
+    // --- 6. TableRenderer Module ---
+    const TableRenderer = (function(Constants, DataStore, Controller, UIManager) {
         function populateTableRows(data) {
             const state = DataStore.getState();
             const tableBody = state.ui.tableBodyElement;
@@ -209,18 +262,12 @@ javascript: (async function() {
                     let cellValue = row[headerKey] ?? '';
                     
                     if (headerKey === Constants.FIELD_DISPLAY_NAMES_MAP._apiQueryStatus && typeof cellValue === 'string' && cellValue.includes('❌')) {
-                        const statusSpan = document.createElement('span');
-                        statusSpan.textContent = cellValue;
-                        td.appendChild(statusSpan);
-
+                        td.innerHTML = `<span>${cellValue}</span>`;
                         const retryBtn = document.createElement('button');
                         retryBtn.textContent = '重試';
                         retryBtn.className = 'qt-dialog-btn qt-dialog-btn-orange';
                         retryBtn.style.cssText = 'margin-left:8px;padding:2px 6px;font-size:10px;';
-                        retryBtn.onclick = (e) => {
-                            e.stopPropagation();
-                            Controller.retrySingleQuery(rowIndex, retryBtn);
-                        };
+                        retryBtn.onclick = (e) => { e.stopPropagation(); Controller.retrySingleQuery(rowIndex, retryBtn); };
                         td.appendChild(retryBtn);
 
                         const editBtn = document.createElement('button');
@@ -244,94 +291,8 @@ javascript: (async function() {
                 });
                 tableBody.appendChild(tr);
             });
-        }
-        return { populateTableRows };
-    })(Constants, DataStore, Controller);
-
-    const App = (function(Constants, DataStore, UIManager, ApiService, TableRenderer) {
-        // Dialogs are created here for simplicity, but could be in their own module
-        const dialogs = {
-            env: () => new Promise(resolve => {
-                const { overlay } = UIManager.createDialogBase('_EnvSelect', `<h3 class="qt-dialog-title">選擇查詢環境</h3><div style="display:flex;gap:10px;justify-content:center;"><button id="qt-env-uat" class="qt-dialog-btn qt-dialog-btn-green">測試 (UAT)</button><button id="qt-env-prod" class="qt-dialog-btn qt-dialog-btn-orange">正式 (PROD)</button></div><div style="text-align:center;margin-top:15px;"><button id="qt-env-cancel" class="qt-dialog-btn qt-dialog-btn-grey">取消</button></div>`);
-                const close = val => { overlay.remove(); resolve(val); };
-                overlay.querySelector('#qt-env-uat').onclick = () => close('uat');
-                overlay.querySelector('#qt-env-prod').onclick = () => close('prod');
-                overlay.querySelector('#qt-env-cancel').onclick = () => close(null);
-            }),
-            token: () => new Promise(resolve => {
-                 const { overlay } = UIManager.createDialogBase('_Token', `<h3 class="qt-dialog-title">API TOKEN 設定</h3><input type="password" id="qt-token-input" class="qt-input" placeholder="請輸入您的 API TOKEN"><div style="display:flex;justify-content:space-between;margin-top:15px;"><button id="qt-token-skip" class="qt-dialog-btn qt-dialog-btn-orange">略過</button><div><button id="qt-token-close-tool" class="qt-dialog-btn qt-dialog-btn-red">關閉</button><button id="qt-token-ok" class="qt-dialog-btn qt-dialog-btn-blue">確定</button></div></div>`);
-                 const input = overlay.querySelector('#qt-token-input');
-                 const close = val => { overlay.remove(); resolve(val); };
-                 overlay.querySelector('#qt-token-ok').onclick = () => close(input.value.trim());
-                 overlay.querySelector('#qt-token-close-tool').onclick = () => close('_close_');
-                 overlay.querySelector('#qt-token-skip').onclick = () => close('_skip_');
-            }),
-            query: () => new Promise(resolve => {
-                const queryButtons = Constants.QUERYABLE_FIELD_DEFINITIONS.map(d => `<button class="qt-dialog-btn" data-apikey="${d.queryApiKey}" style="background-color:${d.color};color:white;">${d.queryDisplayName}</button>`).join('');
-                const { overlay } = UIManager.createDialogBase('_QuerySetup', `<h3 class="qt-dialog-title">查詢條件設定</h3><div>${queryButtons}</div><textarea id="qt-queryvalues-input" class="qt-textarea" placeholder="輸入查詢值..."></textarea><div class="qt-dialog-flex-end"><button class="qt-dialog-btn qt-dialog-btn-grey" id="cancel">取消</button><button class="qt-dialog-btn qt-dialog-btn-blue" id="ok">開始查詢</button></div>`);
-                const input = overlay.querySelector('#qt-queryvalues-input');
-                const close = val => { overlay.remove(); resolve(val); };
-                overlay.querySelector('#ok').onclick = () => close({ queryValues: input.value.trim() });
-                overlay.querySelector('#cancel').onclick = () => close(null);
-                overlay.querySelectorAll('[data-apikey]').forEach(btn => btn.onclick = () => DataStore.getState().selectedQueryDefinition = Constants.QUERYABLE_FIELD_DEFINITIONS.find(d => d.queryApiKey === btn.dataset.apikey));
-            })
-        };
-
-        async function execute() {
-            const state = DataStore.getState();
-            const env = await dialogs.env();
-            if (!env) return UIManager.displaySystemNotification('操作已取消', true);
-            state.currentApiUrl = env === 'prod' ? Constants.API.URL_PROD : Constants.API.URL_UAT;
-
-            if (!state.apiAuthToken) {
-                const token = await dialogs.token();
-                if (token === '_close_') return;
-                if (token && token !== '_skip_') DataStore.setApiAuthToken(token);
-            }
-
-            const setup = await dialogs.query();
-            if (!setup) return;
-            const queryValues = setup.queryValues.split(/[\s,;\n]+/).filter(Boolean);
-            if (!queryValues.length) return UIManager.displaySystemNotification('未輸入查詢值', true);
-
-            DataStore.resetQueryCancelFlag();
-            const { overlay, dialog } = UIManager.createDialogBase('_Loading', `<h3 id="qt-loading-title">查詢中...</h3><p id="qt-loading-msg"></p>`, DataStore.cancelQuery);
-            const loadingMsg = dialog.querySelector('#qt-loading-msg');
-
-            state.originalQueryResults = [];
-            for (const [i, value] of queryValues.entries()) {
-                if (DataStore.isQueryCancelled()) {
-                    UIManager.displaySystemNotification('查詢已由使用者手動停止', false);
-                    break;
-                }
-                loadingMsg.textContent = `處理中 (${i + 1}/${queryValues.length}): ${value}`;
-                
-                const resultRow = {
-                    [Constants.FIELD_DISPLAY_NAMES_MAP.NO]: i + 1,
-                    [Constants.FIELD_DISPLAY_NAMES_MAP._queriedValue_]: value,
-                };
-                
-                const apiResult = await ApiService.performApiQuery(value, state.selectedQueryDefinition.queryApiKey);
-                
-                let statusText = '❌ 查詢失敗';
-                if (apiResult.error === 'token_invalid') {
-                    overlay.remove();
-                    return UIManager.displaySystemNotification('Token失效，請重新執行', true);
-                } else if (apiResult.success) {
-                    statusText = '✔️ 成功';
-                } else if (!apiResult.error) {
-                    statusText = '➖ 查無資料';
-                }
-                resultRow[Constants.FIELD_DISPLAY_NAMES_MAP._apiQueryStatus] = statusText;
-                
-                const rec = apiResult.success ? apiResult.data.records[0] : {};
-                Constants.ALL_DISPLAY_FIELDS_API_KEYS_MAIN.forEach(dKey => {
-                    resultRow[Constants.FIELD_DISPLAY_NAMES_MAP[dKey] || dKey] = rec[dKey] ?? '-';
-                });
-                state.originalQueryResults.push(resultRow);
-            }
-            overlay.remove();
-            renderMainUI(state.originalQueryResults);
+             const summaryEl = state.ui.mainUIElement?.querySelector(`#${Constants.TOOL_MAIN_CONTAINER_ID}_SummarySection`);
+            if (summaryEl) summaryEl.innerHTML = `查詢結果：<strong>${data.length}</strong>筆`;
         }
 
         function renderMainUI(data) {
@@ -345,12 +306,29 @@ javascript: (async function() {
              const titleBar = document.createElement('div');
              titleBar.textContent = '凱基人壽案件查詢結果';
              titleBar.style.cssText = `padding:10px 15px;background-color:#343a40;color:white;font-weight:bold;text-align:center;border-top-left-radius:9px;border-top-right-radius:9px;cursor:grab;`;
+             // Drag logic
+             titleBar.onmousedown = (e) => {
+                 const drag = state.drag;
+                 drag.dragging = true;
+                 drag.startX = e.clientX;
+                 drag.startY = e.clientY;
+                 drag.initialX = mainUI.offsetLeft;
+                 drag.initialY = mainUI.offsetTop;
+             };
+             document.onmousemove = (e) => {
+                 const drag = state.drag;
+                 if (drag.dragging) {
+                     mainUI.style.left = (drag.initialX + e.clientX - drag.startX) + 'px';
+                     mainUI.style.top = (drag.initialY + e.clientY - drag.startY) + 'px';
+                 }
+             };
+             document.onmouseup = () => { state.drag.dragging = false; };
              mainUI.appendChild(titleBar);
              
              const contentWrapper = document.createElement('div');
              contentWrapper.style.cssText = 'padding:15px;overflow-y:auto;display:flex;flex-direction:column;flex-grow:1;';
              const controlsHeader = document.createElement('div');
-             controlsHeader.innerHTML = `<div id="${Constants.TOOL_MAIN_CONTAINER_ID}_SummarySection" style="font-weight:bold;"></div>`;
+             controlsHeader.innerHTML = `<div id="${Constants.TOOL_MAIN_CONTAINER_ID}_SummarySection"></div>`;
              contentWrapper.appendChild(controlsHeader);
              
              const tableScrollWrap = document.createElement('div');
@@ -365,7 +343,7 @@ javascript: (async function() {
              const tBREl = document.createElement('tbody');
              state.ui.tableBodyElement = tBREl;
              
-             let headers = [Constants.FIELD_DISPLAY_NAMES_MAP.NO, Constants.FIELD_DISPLAY_NAMES_MAP._queriedValue_, ...Constants.ALL_DISPLAY_FIELDS_API_KEYS_MAIN.map(k=>Constants.FIELD_DISPLAY_NAMES_MAP[k]), Constants.FIELD_DISPLAY_NAMES_MAP._apiQueryStatus];
+             let headers = [Constants.FIELD_DISPLAY_NAMES_MAP.NO, Constants.FIELD_DISPLAY_NAMES_MAP._queriedValue_, ...Object.values(Constants.ALL_DISPLAY_FIELDS_API_KEYS_MAIN).map(k=>Constants.FIELD_DISPLAY_NAMES_MAP[k] || k), Constants.FIELD_DISPLAY_NAMES_MAP._apiQueryStatus];
              state.ui.currentHeaders = headers;
              const hr = document.createElement('tr');
              headers.forEach(hTxt => {
@@ -383,7 +361,71 @@ javascript: (async function() {
              mainUI.appendChild(contentWrapper);
              document.body.appendChild(mainUI);
              
-             TableRenderer.populateTableRows(data);
+             populateTableRows(data);
+        }
+
+        return { populateTableRows, renderMainUI };
+    })(Constants, DataStore, Controller, UIManager);
+    
+    // --- 7. App Initializer ---
+    const App = (function(Constants, DataStore, UIManager, ApiService, TableRenderer) {
+        async function execute() {
+            const state = DataStore.getState();
+            const { dialogs, displaySystemNotification } = UIManager;
+            
+            const env = await dialogs.env();
+            if (!env) return displaySystemNotification('操作已取消', true);
+            state.currentApiUrl = env === 'prod' ? Constants.API.URL_PROD : Constants.API.URL_UAT;
+
+            if (!state.apiAuthToken) {
+                const token = await dialogs.token();
+                if (token === '_close_') return;
+                if (token && token !== '_skip_') DataStore.setApiAuthToken(token);
+            }
+
+            const setup = await dialogs.query();
+            if (!setup) return;
+            const queryValues = setup.queryValues.split(/[\s,;\n]+/).filter(Boolean);
+            if (!queryValues.length) return displaySystemNotification('未輸入查詢值', true);
+
+            DataStore.resetQueryCancelFlag();
+            const { overlay, dialog } = UIManager.createDialogBase('_Loading', `<h3 id="qt-loading-title">查詢中...</h3><p id="qt-loading-msg"></p>`, DataStore.cancelQuery);
+            const loadingMsg = dialog.querySelector('#qt-loading-msg');
+
+            state.originalQueryResults = [];
+            for (const [i, value] of queryValues.entries()) {
+                if (DataStore.isQueryCancelled()) {
+                    displaySystemNotification('查詢已由使用者手動停止', false);
+                    break;
+                }
+                loadingMsg.textContent = `處理中 (${i + 1}/${queryValues.length}): ${value}`;
+                
+                const resultRow = {
+                    [Constants.FIELD_DISPLAY_NAMES_MAP.NO]: i + 1,
+                    [Constants.FIELD_DISPLAY_NAMES_MAP._queriedValue_]: value,
+                };
+                
+                const apiResult = await ApiService.performApiQuery(value, state.selectedQueryDefinition.queryApiKey);
+                
+                let statusText = '❌ 查詢失敗';
+                if (apiResult.error === 'token_invalid') {
+                    overlay.remove();
+                    return displaySystemNotification('Token失效，請重新執行', true);
+                } else if (apiResult.success) {
+                    statusText = '✔️ 成功';
+                } else if (!apiResult.error) {
+                    statusText = '➖ 查無資料';
+                }
+                resultRow[Constants.FIELD_DISPLAY_NAMES_MAP._apiQueryStatus] = statusText;
+                
+                const rec = apiResult.success ? apiResult.data.records[0] : {};
+                Constants.ALL_DISPLAY_FIELDS_API_KEYS_MAIN.forEach(dKey => {
+                    resultRow[Constants.FIELD_DISPLAY_NAMES_MAP[dKey] || dKey] = rec[dKey] ?? '-';
+                });
+                state.originalQueryResults.push(resultRow);
+            }
+            overlay.remove();
+            TableRenderer.renderMainUI(state.originalQueryResults);
         }
 
         function init() {
@@ -397,4 +439,5 @@ javascript: (async function() {
     })(Constants, DataStore, UIManager, ApiService, TableRenderer);
 
     App.init();
+
 })();
