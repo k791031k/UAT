@@ -12,98 +12,77 @@
  * - 全面優化程式碼結構與註解，提升可維護性。
  * ============================================================================
  */
-(function() {
-	'use strict';
+javascript:(function() {
+    'use strict';
 
-	// ============================================================================
-	// 模組 1: AppConfig - 應用程式靜態設定
-	// ============================================================================
-	const AppConfig = Object.freeze({
-		TOOL_ID: 'planCodeQueryTool_v7',
-		STYLE_ID: 'planCodeToolStyle_v7',
-		API_ENDPOINTS: {
-			UAT: 'https://euisv-uat.apps.tocp4.kgilife.com.tw/euisw/euisbq/api',
-			PROD: 'https://euisv.apps.ocp4.kgilife.com.tw/euisw/euisbq/api'
-		},
-		QUERY_MODES: {
-			PLAN_CODE: 'planCode',
-			PLAN_NAME: 'planCodeName',
-			ALL_MASTER: 'allMasterPlans',
-			MASTER_IN_SALE: 'masterInSale',
-			MASTER_STOPPED: 'masterStopped',
-			CHANNEL_IN_SALE: 'channelInSale',
-			CHANNEL_STOPPED: 'channelStopped'
-		},
-		SALE_STATUS: {
-			CURRENT: '現售中',
-			STOPPED: '停售',
-			PENDING: '未開始',
-			ABNORMAL: '日期異常'
-		},
-		FIELD_MAPS: {
-			CURRENCY: {
-				'1': "TWD",
-				'2': "USD",
-				'3': "AUD",
-				'4': "CNT",
-				'5': "USD_OIU"
-			},
-			UNIT: {
-				'A1': "元",
-				'A3': "仟元",
-				'A4': "萬元",
-				'B1': "計畫",
-				'C1': "單位"
-			},
-			COVERAGE_TYPE: {
-				'M': "主約",
-				'R': "附約"
-			},
-			CHANNELS: ['AG', 'BR', 'BK', 'WS', 'EC']
-		},
-		PAGINATION: {
-			PAGE_SIZE: 50
-		},
-		API_FETCH_CONFIG: {
-			MASTER_PAGE_SIZE: 5000,
-			DETAIL_PAGE_SIZE: 50,
-			CHANNEL_PAGE_SIZE: 1000
-		}
-	});
+    // ============================================================================
+    // 模組 1: AppConfig - 應用程式靜態設定
+    // ============================================================================
+    const AppConfig = Object.freeze({
+        TOOL_ID: 'planCodeQueryTool_v7',
+        STYLE_ID: 'planCodeToolStyle_v7',
+        API_ENDPOINTS: {
+            UAT: 'https://euisv-uat.apps.tocp4.kgilife.com.tw/euisw/euisbq/api',
+            PROD: 'https://euisv.apps.ocp4.kgilife.com.tw/euisw/euisbq/api'
+        },
+        QUERY_MODES: {
+            PLAN_CODE: 'planCode',
+            PLAN_NAME: 'planCodeName',
+            ALL_MASTER: 'allMasterPlans',
+            MASTER_IN_SALE: 'masterInSale',
+            MASTER_STOPPED: 'masterStopped',
+            CHANNEL_IN_SALE: 'channelInSale',
+            CHANNEL_STOPPED: 'channelStopped'
+        },
+        SALE_STATUS: {
+            CURRENT: '現售中',
+            STOPPED: '停售',
+            PENDING: '未開始',
+            ABNORMAL: '日期異常'
+        },
+        FIELD_MAPS: {
+            CURRENCY: { '1': "TWD", '2': "USD", '3': "AUD", '4': "CNT", '5': "USD_OIU" },
+            UNIT: { 'A1': "元", 'A3': "仟元", 'A4': "萬元", 'B1': "計畫", 'C1': "單位" },
+            COVERAGE_TYPE: { 'M': "主約", 'R': "附約" },
+            CHANNELS: ['AG', 'BR', 'BK', 'WS', 'EC']
+        },
+        PAGINATION: {
+            PAGE_SIZE: 50
+        },
+        API_FETCH_CONFIG: {
+            MASTER_PAGE_SIZE: 5000,
+            DETAIL_PAGE_SIZE: 50,
+            CHANNEL_PAGE_SIZE: 1000
+        }
+    });
 
-	// ============================================================================
-	// 模組 2: UIManager - 使用者介面管理器
-	// ============================================================================
-	const UIManager = (function() {
-		let ui = {
-			container: null
-		};
-		let toastTimeoutId = null;
+    // ============================================================================
+    // 模組 2: UIManager - 使用者介面管理器
+    // ============================================================================
+    const UIManager = (function() {
+        let ui = { container: null };
+        let toastTimeoutId = null;
 
-		function createMainUI() {
-			destroyMainUI();
-			injectStyles();
-			ui.container = document.createElement('div');
-			ui.container.id = AppConfig.TOOL_ID;
-			ui.container.className = 'pct-main-window';
-			document.body.appendChild(ui.container);
-		}
+        function createMainUI() {
+            destroyMainUI();
+            injectStyles();
+            ui.container = document.createElement('div');
+            ui.container.id = AppConfig.TOOL_ID;
+            ui.container.className = 'pct-main-window';
+            document.body.appendChild(ui.container);
+        }
 
-		function destroyMainUI() {
-			const existingUI = document.getElementById(AppConfig.TOOL_ID);
-			if (existingUI) existingUI.remove();
-			const existingStyle = document.getElementById(AppConfig.STYLE_ID);
-			if (existingStyle) existingStyle.remove();
-		}
+        function destroyMainUI() {
+            const existingUI = document.getElementById(AppConfig.TOOL_ID);
+            if (existingUI) existingUI.remove();
+            const existingStyle = document.getElementById(AppConfig.STYLE_ID);
+            if (existingStyle) existingStyle.remove();
+        }
 
-		function renderView({
-			title,
-			bodyHTML,
-			footerHTML
-		}) {
-			if (!ui.container) createMainUI();
-
-			ui.container.innerHTML = `
+        function renderView({ title, bodyHTML, footerHTML }) {
+            if (!ui.container) createMainUI();
+            
+            ui.container.innerHTML = `
                 <div class="pct-main-header">
                     <span class="pct-title-text">${title}</span>
                     <button class="pct-close-btn">&times;</button>
@@ -113,49 +92,46 @@
                     <div class="pct-content-footer">${footerHTML}</div>
                 </div>
             `;
+            
+            ui.container.querySelector('.pct-close-btn').onclick = AppCore.destroy;
+            enableDrag(ui.container.querySelector('.pct-main-header'), ui.container);
+            return ui.container.querySelector('.pct-main-content');
+        }
+        
+        function enableDrag(header, container) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            header.onmousedown = dragMouseDown;
 
-			ui.container.querySelector('.pct-close-btn').onclick = AppCore.destroy;
-			enableDrag(ui.container.querySelector('.pct-main-header'), ui.container);
-			return ui.container.querySelector('.pct-main-content');
-		}
+            function dragMouseDown(e) {
+                if (e.target.tagName === 'BUTTON') return;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
 
-		function enableDrag(header, container) {
-			let pos1 = 0,
-				pos2 = 0,
-				pos3 = 0,
-				pos4 = 0;
-			header.onmousedown = dragMouseDown;
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                container.style.top = (container.offsetTop - pos2) + "px";
+                container.style.left = (container.offsetLeft - pos1) + "px";
+            }
 
-			function dragMouseDown(e) {
-				if (e.target.tagName === 'BUTTON') return;
-				e.preventDefault();
-				pos3 = e.clientX;
-				pos4 = e.clientY;
-				document.onmouseup = closeDragElement;
-				document.onmousemove = elementDrag;
-			}
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
 
-			function elementDrag(e) {
-				e.preventDefault();
-				pos1 = pos3 - e.clientX;
-				pos2 = pos4 - e.clientY;
-				pos3 = e.clientX;
-				pos4 = e.clientY;
-				container.style.top = (container.offsetTop - pos2) + "px";
-				container.style.left = (container.offsetLeft - pos1) + "px";
-			}
-
-			function closeDragElement() {
-				document.onmouseup = null;
-				document.onmousemove = null;
-			}
-		}
-
-		function injectStyles() {
-			if (document.getElementById(AppConfig.STYLE_ID)) return;
-			const style = document.createElement('style');
-			style.id = AppConfig.STYLE_ID;
-			style.textContent = `
+        function injectStyles() {
+            if (document.getElementById(AppConfig.STYLE_ID)) return;
+            const style = document.createElement('style');
+            style.id = AppConfig.STYLE_ID;
+            style.textContent = `
                 :root { --pct-primary: #007BFF; --pct-dark: #343a40; --pct-success: #28a745; --pct-danger: #dc3545; --pct-warning: #ffc107; --pct-info: #17a2b8; --pct-light: #f8f9fa; --pct-surface: #FFFFFF; --pct-border: #dee2e6; --pct-shadow: rgba(0, 0, 0, 0.1); --pct-radius: 8px; --pct-transition: 0.2s ease-in-out; }
                 #${AppConfig.TOOL_ID} { font-family: 'Microsoft JhengHei', sans-serif; }
                 .pct-main-window { position: fixed; top: 100px; left: 100px; min-width: 550px; max-width: 90vw; background: var(--pct-light); border-radius: var(--pct-radius); box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 2147483640; display: flex; flex-direction: column; border: 1px solid #ccc; }
@@ -186,585 +162,298 @@
                 .pct-toast-cancel-btn { background: #555; border: 1px solid #777; color: #fff; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
                 .pct-spinner { width: 1em; height: 1em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: pct-spin .75s linear infinite; } @keyframes pct-spin { to { transform: rotate(360deg); } }
             `;
-			document.head.appendChild(style);
-		}
+            document.head.appendChild(style);
+        }
+        
+        function showToast({ message, type = 'info', duration = 3000, onCancel = null }) {
+            clearTimeout(toastTimeoutId);
+            const existingToast = document.querySelector('.pct-toast');
+            if(existingToast) existingToast.remove();
+            const toast = document.createElement('div');
+            toast.className = `pct-toast ${type}`;
+            
+            const messageSpan = document.createElement('span');
+            messageSpan.className = 'pct-toast-message';
+            messageSpan.textContent = message;
+            toast.appendChild(messageSpan);
 
-		function showToast({
-			message,
-			type = 'info',
-			duration = 3000,
-			onCancel = null
-		}) {
-			clearTimeout(toastTimeoutId);
-			const existingToast = document.querySelector('.pct-toast');
-			if (existingToast) existingToast.remove();
-			const toast = document.createElement('div');
-			toast.className = `pct-toast ${type}`;
+            if (onCancel) {
+                const cancelBtn = document.createElement('button');
+                cancelBtn.className = 'pct-toast-cancel-btn';
+                cancelBtn.textContent = '取消';
+                cancelBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    onCancel();
+                    toast.remove();
+                    clearTimeout(toastTimeoutId);
+                };
+                toast.appendChild(cancelBtn);
+            }
+            
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            if (duration > 0) {
+                toastTimeoutId = setTimeout(() => { toast.remove(); }, duration);
+            }
+            return toast;
+        }
 
-			const messageSpan = document.createElement('span');
-			messageSpan.className = 'pct-toast-message';
-			messageSpan.textContent = message;
-			toast.appendChild(messageSpan);
+        return { destroyMainUI, renderView, showToast };
+    })();
+    
+    const Utils = (function() { return { escapeHtml(text) { if (typeof text !== 'string') return text ?? ''; const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }; return text.replace(/[&<>"']/g, m => map[m]); }, getTodayStr() { const d = new Date(); return `${d.getFullYear()}${('0' + (d.getMonth() + 1)).slice(-2)}${('0' + d.getDate()).slice(-2)}`; }, formatDate(dtStr) { if (!dtStr || !String(dtStr).trim()) return ''; const datePart = String(dtStr).split(' ')[0].replace(/-/g, ''); if (datePart.length !== 8) return dtStr; return datePart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'); }, getSaleStatus(today, startDateStr, endDateStr) { if (!startDateStr || !endDateStr) return ''; const start = new Date(this.formatDate(startDateStr)); const end = new Date(this.formatDate(endDateStr)); const todayDate = new Date(this.formatDate(today)); if (isNaN(start.getTime()) || isNaN(end.getTime())) return AppConfig.SALE_STATUS.ABNORMAL; if (String(endDateStr).includes('9999')) return AppConfig.SALE_STATUS.CURRENT; if (todayDate.getTime() > end.getTime()) return AppConfig.SALE_STATUS.STOPPED; if (todayDate.getTime() < start.getTime()) return AppConfig.SALE_STATUS.PENDING; return AppConfig.SALE_STATUS.CURRENT; }, copyToClipboard(text) { navigator.clipboard.writeText(text).then(() => UIManager.showToast({ message: '已成功複製到剪貼簿', type: 'success' }), () => UIManager.showToast({ message: '複製失敗', type: 'error'})); } }; })();
+    const APIService = (function() { let _token = ''; let _apiBase = ''; async function _fetch(endpoint, payload, signal) { try { const response = await fetch(`${_apiBase}${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'SSO-TOKEN': _token }, body: JSON.stringify(payload), signal }); if (response.status === 401) throw new Error('Token 無效 (401)'); if (!response.ok) throw new Error(`API 請求失敗: ${response.status}`); return response.json(); } catch (error) { if (error.name === 'AbortError') throw new Error('查詢已中止'); console.error(`API 呼叫失敗 (${endpoint}):`, error); throw error; } } return { init(token, apiBase) { _token = token; _apiBase = apiBase; }, async verifyToken() { try { await _fetch('/planCodeController/query', { planCode: '5105', pageNo: 1, pageSize: 1 }); return true; } catch { return false; } }, getMasterPlans(params, signal) { return _fetch('/planCodeController/query', params, signal); }, getChannelSales(planCode, signal) { return _fetch('/planCodeSaleDateController/query', { planCode, pageNo: 1, pageSize: AppConfig.API_FETCH_CONFIG.CHANNEL_PAGE_SIZE }, signal); } }; })();
+    const DataProcessor = (function() { let _cache = { channels: new Map() }; function _processRecord(raw, index, today) { return { id: raw.planCode + '_' + index, no: index + 1, planCode: raw.planCode, secondaryCode: '-', name: raw.shortName || raw.planCodeName, currency: AppConfig.FIELD_MAPS.CURRENCY[raw.currency] || raw.currency || '-', unit: AppConfig.FIELD_MAPS.UNIT[raw.reportInsuranceAmountUnit] || AppConfig.FIELD_MAPS.UNIT[raw.insuranceAmountUnit] || '-', type: AppConfig.FIELD_MAPS.COVERAGE_TYPE[raw.coverageType] || raw.coverageType || '-', saleStartDate: Utils.formatDate(raw.saleStartDate), saleEndDate: Utils.formatDate(raw.saleEndDate), mainStatus: Utils.getSaleStatus(today, raw.saleStartDate, raw.saleEndDate), channels: [], detailsFetched: false, _isErrorRow: raw._isErrorRow || false, _errorMsg: raw._errorMsg || '' }; } async function _fetchAndAssignDetails(item, today, signal) { if (_cache.channels.has(item.planCode)) { item.channels = _cache.channels.get(item.planCode); } else { try { const data = await APIService.getChannelSales(item.planCode, signal); item.channels = (data.planCodeSaleDates?.records || []).map(c => ({ name: c.channel === 'OT' ? 'BK' : c.channel, status: Utils.getSaleStatus(today, c.saleStartDate, c.saleEndDate), startDate: Utils.formatDate(c.saleStartDate), endDate: Utils.formatDate(c.saleEndDate) })); _cache.channels.set(item.planCode, item.channels); } catch (e) { if (e.name === 'AbortError') throw e; console.warn(`查詢通路 ${item.planCode} 失敗`); } } item.detailsFetched = true; return item; } return { processInitialData(rawData) { _cache.channels.clear(); const today = Utils.getTodayStr(); return rawData.map((d, i) => _processRecord(d, i, today)); }, async fetchAllDetails(data, signal) { const today = Utils.getTodayStr(); const promises = data.map(item => item.detailsFetched ? Promise.resolve(item) : _fetchAndAssignDetails(item, today, signal)); return Promise.all(promises); } }; })();
 
-			if (onCancel) {
-				const cancelBtn = document.createElement('button');
-				cancelBtn.className = 'pct-toast-cancel-btn';
-				cancelBtn.textContent = '取消';
-				cancelBtn.onclick = (e) => {
-					e.stopPropagation();
-					onCancel();
-					toast.remove();
-					clearTimeout(toastTimeoutId);
-				};
-				toast.appendChild(cancelBtn);
-			}
+    // ============================================================================
+    // 模組 6: AppCore - 應用程式核心
+    // ============================================================================
+    const AppCore = (function() {
+        let state = {};
+        let queryAbortController = null;
 
-			document.body.appendChild(toast);
-			setTimeout(() => toast.classList.add('show'), 10);
-			if (duration > 0) {
-				toastTimeoutId = setTimeout(() => {
-					toast.remove();
-				}, duration);
-			}
-			return toast;
-		}
+        function initState() { state = { env: '', apiBase: '', token: '', allData: [], displayedData: [], pageNo: 1, isQueryCancelled: false }; }
+        function destroy() { UIManager.destroyMainUI(); document.removeEventListener('keydown', handleGlobalEsc); }
+        function handleGlobalEsc(e) { if (e.key === 'Escape') destroy(); }
+        
+        function start() {
+            destroy();
+            initState();
+            state.env = window.location.hostname.includes('uat') ? 'UAT' : 'PROD';
+            state.apiBase = AppConfig.API_ENDPOINTS[state.env];
+            document.addEventListener('keydown', handleGlobalEsc);
+            UIManager.createMainUI();
+            showTokenView();
+        }
 
-		return {
-			destroyMainUI,
-			renderView,
-			showToast
-		};
-	})();
+        function showTokenView() {
+            state.token = localStorage.getItem(`sso_token_pq_v6_${state.env.toLowerCase()}`) || '';
+            const contentEl = UIManager.renderView({
+                title: `API TOKEN 設定 (${state.env})`,
+                bodyHTML: `<textarea class="pct-textarea" id="pct-token-input" rows="4" placeholder="請貼上您的 API TOKEN..."></textarea>`,
+                footerHTML: `<button id="pct-token-skip" class="pct-btn pct-btn-warning">略過</button><button id="pct-token-close" class="pct-btn pct-btn-secondary">關閉</button><button id="pct-token-ok" class="pct-btn pct-btn-primary">確定</button>`
+            });
+            
+            const tokenInput = contentEl.querySelector('#pct-token-input');
+            tokenInput.value = state.token;
+            tokenInput.focus();
 
-	const Utils = (function() {
-		return {
-			escapeHtml(text) {
-				if (typeof text !== 'string') return text ?? '';
-				const map = {
-					'&': '&amp;',
-					'<': '&lt;',
-					'>': '&gt;',
-					'"': '&quot;',
-					"'": '&#039;'
-				};
-				return text.replace(/[&<>"']/g, m => map[m]);
-			},
-			getTodayStr() {
-				const d = new Date();
-				return `${d.getFullYear()}${('0' + (d.getMonth() + 1)).slice(-2)}${('0' + d.getDate()).slice(-2)}`;
-			},
-			formatDate(dtStr) {
-				if (!dtStr || !String(dtStr).trim()) return '';
-				const datePart = String(dtStr).split(' ')[0].replace(/-/g, '');
-				if (datePart.length !== 8) return dtStr;
-				return datePart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
-			},
-			getSaleStatus(today, startDateStr, endDateStr) {
-				if (!startDateStr || !endDateStr) return '';
-				const start = new Date(this.formatDate(startDateStr));
-				const end = new Date(this.formatDate(endDateStr));
-				const todayDate = new Date(this.formatDate(today));
-				if (isNaN(start.getTime()) || isNaN(end.getTime())) return AppConfig.SALE_STATUS.ABNORMAL;
-				if (String(endDateStr).includes('9999')) return AppConfig.SALE_STATUS.CURRENT;
-				if (todayDate.getTime() > end.getTime()) return AppConfig.SALE_STATUS.STOPPED;
-				if (todayDate.getTime() < start.getTime()) return AppConfig.SALE_STATUS.PENDING;
-				return AppConfig.SALE_STATUS.CURRENT;
-			},
-			copyToClipboard(text) {
-				navigator.clipboard.writeText(text).then(() => UIManager.showToast({
-					message: '已成功複製到剪貼簿',
-					type: 'success'
-				}), () => UIManager.showToast({
-					message: '複製失敗',
-					type: 'error'
-				}));
-			}
-		};
-	})();
-	const APIService = (function() {
-		let _token = '';
-		let _apiBase = '';
-		async function _fetch(endpoint, payload, signal) {
-			try {
-				const response = await fetch(`${_apiBase}${endpoint}`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'SSO-TOKEN': _token
-					},
-					body: JSON.stringify(payload),
-					signal
-				});
-				if (response.status === 401) throw new Error('Token 無效 (401)');
-				if (!response.ok) throw new Error(`API 請求失敗: ${response.status}`);
-				return response.json();
-			} catch (error) {
-				if (error.name === 'AbortError') throw new Error('查詢已中止');
-				console.error(`API 呼叫失敗 (${endpoint}):`, error);
-				throw error;
-			}
-		}
-		return {
-			init(token, apiBase) {
-				_token = token;
-				_apiBase = apiBase;
-			},
-			async verifyToken() {
-				try {
-					await _fetch('/planCodeController/query', {
-						planCode: '5105',
-						pageNo: 1,
-						pageSize: 1
-					});
-					return true;
-				} catch {
-					return false;
-				}
-			},
-			getMasterPlans(params, signal) {
-				return _fetch('/planCodeController/query', params, signal);
-			},
-			getChannelSales(planCode, signal) {
-				return _fetch('/planCodeSaleDateController/query', {
-					planCode,
-					pageNo: 1,
-					pageSize: AppConfig.API_FETCH_CONFIG.CHANNEL_PAGE_SIZE
-				}, signal);
-			}
-		};
-	})();
-	const DataProcessor = (function() {
-		let _cache = {
-			channels: new Map()
-		};
+            const proceed = async (token, shouldVerify) => {
+                const okBtn = contentEl.querySelector('#pct-token-ok');
+                if (okBtn.disabled) return;
+                if (!token && shouldVerify) { UIManager.showToast({ message: 'Token 不可為空', type: 'error' }); return; }
+                if (!token && !shouldVerify) { UIManager.showToast({ message: '略過驗證模式仍需提供 Token', type: 'error' }); return; }
 
-		function _processRecord(raw, index, today) {
-			return {
-				id: raw.planCode + '_' + index,
-				no: index + 1,
-				planCode: raw.planCode,
-				secondaryCode: '-',
-				name: raw.shortName || raw.planCodeName,
-				currency: AppConfig.FIELD_MAPS.CURRENCY[raw.currency] || raw.currency || '-',
-				unit: AppConfig.FIELD_MAPS.UNIT[raw.reportInsuranceAmountUnit] || AppConfig.FIELD_MAPS.UNIT[raw.insuranceAmountUnit] || '-',
-				type: AppConfig.FIELD_MAPS.COVERAGE_TYPE[raw.coverageType] || raw.coverageType || '-',
-				saleStartDate: Utils.formatDate(raw.saleStartDate),
-				saleEndDate: Utils.formatDate(raw.saleEndDate),
-				mainStatus: Utils.getSaleStatus(today, raw.saleStartDate, raw.saleEndDate),
-				channels: [],
-				detailsFetched: false,
-				_isErrorRow: raw._isErrorRow || false,
-				_errorMsg: raw._errorMsg || ''
-			};
-		}
-		async function _fetchAndAssignDetails(item, today, signal) {
-			if (_cache.channels.has(item.planCode)) {
-				item.channels = _cache.channels.get(item.planCode);
-			} else {
-				try {
-					const data = await APIService.getChannelSales(item.planCode, signal);
-					item.channels = (data.planCodeSaleDates?.records || []).map(c => ({
-						name: c.channel === 'OT' ? 'BK' : c.channel,
-						status: Utils.getSaleStatus(today, c.saleStartDate, c.saleEndDate),
-						startDate: Utils.formatDate(c.saleStartDate),
-						endDate: Utils.formatDate(c.saleEndDate)
-					}));
-					_cache.channels.set(item.planCode, item.channels);
-				} catch (e) {
-					if (e.name === 'AbortError') throw e;
-					console.warn(`查詢通路 ${item.planCode} 失敗`);
-				}
-			}
-			item.detailsFetched = true;
-			return item;
-		}
-		return {
-			processInitialData(rawData) {
-				_cache.channels.clear();
-				const today = Utils.getTodayStr();
-				return rawData.map((d, i) => _processRecord(d, i, today));
-			},
-			async fetchAllDetails(data, signal) {
-				const today = Utils.getTodayStr();
-				const promises = data.map(item => item.detailsFetched ? Promise.resolve(item) : _fetchAndAssignDetails(item, today, signal));
-				return Promise.all(promises);
-			}
-		};
-	})();
+                state.token = token;
+                localStorage.setItem(`sso_token_pq_v6_${state.env.toLowerCase()}`, token);
+                APIService.init(token, state.apiBase);
 
-	// ============================================================================
-	// 模組 6: AppCore - 應用程式核心
-	// ============================================================================
-	const AppCore = (function() {
-		let state = {};
-		let queryAbortController = null;
+                if (!shouldVerify) { showQueryView(); return; }
 
-		function initState() {
-			state = {
-				env: '',
-				apiBase: '',
-				token: '',
-				allData: [],
-				displayedData: [],
-				pageNo: 1,
-				isQueryCancelled: false
-			};
-		}
+                okBtn.disabled = true; okBtn.innerHTML = `<div class="pct-spinner"></div> 驗證中`;
+                const isValid = await APIService.verifyToken();
+                okBtn.disabled = false; okBtn.innerHTML = '確定';
 
-		function destroy() {
-			UIManager.destroyMainUI();
-			document.removeEventListener('keydown', handleGlobalEsc);
-		}
+                if (isValid) { UIManager.showToast({ message: 'Token 驗證成功', type: 'success' }); showQueryView(); }
+                else { UIManager.showToast({ message: 'Token 無效或已過期', type: 'error' }); }
+            };
 
-		function handleGlobalEsc(e) {
-			if (e.key === 'Escape') destroy();
-		}
+            contentEl.querySelector('#pct-token-ok').onclick = () => proceed(tokenInput.value.trim(), true);
+            contentEl.querySelector('#pct-token-skip').onclick = () => proceed(tokenInput.value.trim(), false);
+            contentEl.querySelector('#pct-token-close').onclick = destroy;
+        }
 
-		function start() {
-			destroy();
-			initState();
-			state.env = window.location.hostname.includes('uat') ? 'UAT' : 'PROD';
-			state.apiBase = AppConfig.API_ENDPOINTS[state.env];
-			document.addEventListener('keydown', handleGlobalEsc);
-			UIManager.createMainUI();
-			showTokenView();
-		}
+        function showQueryView() {
+            let selectedMode = '', queryInput = '', selectedChannels = [];
+            const modes = [ { key: 'planCode', label: '商品代號' }, { key: 'planCodeName', label: '商品名稱' }, { key: 'allMasterPlans', label: '全部主檔' }, { key: 'masterInSale', label: '主檔現售' }, { key: 'masterStopped', label: '主檔停售' }, { key: 'channelInSale', label: '通路現售' }, { key: 'channelStopped', label: '通路停售' }];
+            const masterModes = modes.slice(0, 5);
+            const channelModes = modes.slice(5, 7);
+            const toHtml = (m) => `<button class="pct-query-segment-btn" data-mode="${m.key}">${m.label}</button>`;
 
-		function showTokenView() {
-			state.token = localStorage.getItem(`sso_token_pq_v6_${state.env.toLowerCase()}`) || '';
-			const contentEl = UIManager.renderView({
-				title: `API TOKEN 設定 (${state.env})`,
-				bodyHTML: `<textarea class="pct-textarea" id="pct-token-input" rows="4" placeholder="請貼上您的 API TOKEN..."></textarea>`,
-				footerHTML: `<button id="pct-token-skip" class="pct-btn pct-btn-warning">略過</button><button id="pct-token-close" class="pct-btn pct-btn-secondary">關閉</button><button id="pct-token-ok" class="pct-btn pct-btn-primary">確定</button>`
-			});
+            const contentEl = UIManager.renderView({
+                title: `選擇查詢條件 (${state.env})`,
+                bodyHTML: `<div><strong>主檔查詢</strong></div><div class="pct-query-segment">${masterModes.map(toHtml).join('')}</div><div style="margin-top: 1rem;"><strong>通路查詢 (此查詢較耗時)</strong></div><div class="pct-query-segment">${channelModes.map(toHtml).join('')}</div><div id="pct-dynamic-area" style="margin-top: 1.5rem;"></div>`,
+                footerHTML: `<button id="pct-query-cancel" class="pct-btn pct-btn-secondary">關閉</button><button id="pct-query-ok" class="pct-btn pct-btn-primary">查詢</button>`
+            });
+            
+            const dynamicArea = contentEl.querySelector('#pct-dynamic-area');
+            const queryBtns = contentEl.querySelectorAll('.pct-query-segment-btn');
+            
+            function selectMode(btn) {
+                queryBtns.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedMode = btn.dataset.mode;
+                dynamicArea.innerHTML = getDynamicQueryHTML(selectedMode);
+                 if (selectedMode === 'channelInSale' || selectedMode === 'channelStopped') {
+                    dynamicArea.querySelectorAll('.pct-channel-check').forEach(chk => {
+                        chk.onchange = () => {
+                            selectedChannels = [...dynamicArea.querySelectorAll('.pct-channel-check:checked')].map(c => c.value);
+                        };
+                    });
+                }
+            }
+            
+            queryBtns.forEach(btn => btn.onclick = (e) => selectMode(e.currentTarget));
+            selectMode(queryBtns[0]);
 
-			const tokenInput = contentEl.querySelector('#pct-token-input');
-			tokenInput.value = state.token;
-			tokenInput.focus();
+            contentEl.querySelector('#pct-query-cancel').onclick = destroy;
+            contentEl.querySelector('#pct-query-ok').onclick = (e) => {
+                queryInput = contentEl.querySelector('#pct-query-input')?.value.trim() || '';
+                if (selectedMode === 'channelInSale' || selectedMode === 'channelStopped') {
+                     selectedChannels = Array.from(contentEl.querySelectorAll('.pct-channel-check:checked')).map(cb => cb.value);
+                }
 
-			const proceed = async (token, shouldVerify) => {
-				const okBtn = contentEl.querySelector('#pct-token-ok');
-				if (okBtn.disabled) return;
-				if (!token && shouldVerify) {
-					UIManager.showToast({
-						message: 'Token 不可為空',
-						type: 'error'
-					});
-					return;
-				}
-				if (!token && !shouldVerify) {
-					UIManager.showToast({
-						message: '略過驗證模式仍需提供 Token',
-						type: 'error'
-					});
-					return;
-				}
+                if (!selectedMode) { UIManager.showToast({ message: '請選擇一個查詢模式', type: 'error' }); return; }
+                if ((AppConfig.QUERY_MODES.PLAN_CODE === selectedMode || AppConfig.QUERY_MODES.PLAN_NAME === selectedMode) && !queryInput) { UIManager.showToast({ message: '請輸入查詢內容', type: 'error' }); return; }
+                
+                const queryBtn = e.currentTarget;
+                queryBtn.disabled = true;
+                queryBtn.innerHTML = `<div class="pct-spinner"></div> 查詢中`;
+                
+                runQuery(selectedMode, queryInput, selectedChannels).finally(() => {
+                    queryBtn.disabled = false;
+                    queryBtn.innerHTML = '查詢';
+                });
+            };
+        }
+        
+        async function runQuery(mode, input, channels) {
+            state.isQueryCancelled = false;
+            queryAbortController = new AbortController();
+            const signal = queryAbortController.signal;
 
-				state.token = token;
-				localStorage.setItem(`sso_token_pq_v6_${state.env.toLowerCase()}`, token);
-				APIService.init(token, state.apiBase);
+            const toast = UIManager.showToast({ message: '查詢中...', duration: 0, onCancel: () => queryAbortController.abort() });
+            const toastMsgEl = toast.querySelector('.pct-toast-message');
 
-				if (!shouldVerify) {
-					showQueryView();
-					return;
-				}
+            try {
+                let rawData = [];
+                const today = Utils.getTodayStr();
+                
+                if (mode === AppConfig.QUERY_MODES.PLAN_CODE) {
+                    const codes = input.split(/[\s,;]+/).filter(Boolean);
+                    for (let i = 0; i < codes.length; i++) {
+                        if (signal.aborted) throw new Error('查詢已取消');
+                        toastMsgEl.textContent = `查詢中... (${i + 1}/${codes.length})`;
+                        try {
+                            const result = await APIService.getMasterPlans({ planCode: codes[i], pageSize: 1 }, signal);
+                            if (result.records?.length > 0) rawData.push(...result.records);
+                            else rawData.push({ _isErrorRow: true, planCode: codes[i], _errorMsg: '查無資料' });
+                        } catch (e) {
+                            if (signal.aborted) throw e;
+                            rawData.push({ _isErrorRow: true, planCode: codes[i], _errorMsg: `查詢失敗` });
+                        }
+                    }
+                } else if (mode === AppConfig.QUERY_MODES.CHANNEL_IN_SALE || mode === AppConfig.QUERY_MODES.CHANNEL_STOPPED) {
+                    toastMsgEl.textContent = '正在獲取通路資料...';
+                    const channelsToQuery = channels.length > 0 ? channels : AppConfig.FIELD_MAPS.CHANNELS;
+                    let allChannelRecords = [];
+                    for (const ch of channelsToQuery) {
+                        const channelParam = ch === 'BK' ? 'OT' : ch;
+                        const result = await APIService.getChannelSales(channelParam, signal);
+                        if (result.planCodeSaleDates?.records) allChannelRecords.push(...result.planCodeSaleDates.records);
+                    }
+                    const filteredRecords = allChannelRecords.filter(r => Utils.getSaleStatus(today, r.saleStartDate, r.saleEndDate) === (mode === AppConfig.QUERY_MODES.CHANNEL_IN_SALE ? AppConfig.SALE_STATUS.CURRENT : AppConfig.SALE_STATUS.STOPPED));
+                    const uniquePlanCodes = [...new Set(filteredRecords.map(r => r.planCode))];
+                    
+                    for (let i = 0; i < uniquePlanCodes.length; i++) {
+                        if(signal.aborted) break;
+                        toastMsgEl.textContent = `正在獲取主檔資料... (${i + 1}/${uniquePlanCodes.length})`;
+                        const result = await APIService.getMasterPlans({planCode: uniquePlanCodes[i]}, signal);
+                        if(result.records) rawData.push(...result.records);
+                    }
+                }
+                else {
+                    let params = { pageNo: 1, pageSize: AppConfig.API_FETCH_CONFIG.MASTER_PAGE_SIZE };
+                    if (mode === AppConfig.QUERY_MODES.PLAN_NAME) params.planCodeName = input;
+                    if (mode === AppConfig.QUERY_MODES.MASTER_IN_SALE) params.saleEndDate = '9999-12-31 00:00:00';
+                    const result = await APIService.getMasterPlans(params, signal);
+                    rawData = result.records || [];
+                    if (mode === AppConfig.QUERY_MODES.MASTER_STOPPED) {
+                        rawData = rawData.filter(r => Utils.getSaleStatus(Utils.getTodayStr(), r.saleStartDate, r.saleEndDate) === AppConfig.SALE_STATUS.STOPPED);
+                    }
+                }
 
-				okBtn.disabled = true;
-				okBtn.innerHTML = `<div class="pct-spinner"></div> 驗證中`;
-				const isValid = await APIService.verifyToken();
-				okBtn.disabled = false;
-				okBtn.innerHTML = '確定';
+                if (signal.aborted) return;
+                
+                toast.remove();
+                UIManager.showToast({ message: '查詢完成', type: 'success' });
+                state.allData = DataProcessor.processInitialData(rawData);
+                state.displayedData = state.allData;
+                state.totalPages = Math.ceil(state.allData.length / AppConfig.PAGINATION.PAGE_SIZE);
+                state.pageNo = 1;
+                renderResultsView();
+            } catch(error) {
+                if (!state.isQueryCancelled) UIManager.showToast({ message: `查詢失敗: ${error.message}`, type: 'error' });
+            } finally {
+                if (toast && toast.parentNode) toast.remove();
+            }
+        }
 
-				if (isValid) {
-					UIManager.showToast({
-						message: 'Token 驗證成功',
-						type: 'success'
-					});
-					showQueryView();
-				} else {
-					UIManager.showToast({
-						message: 'Token 無效或已過期',
-						type: 'error'
-					});
-				}
-			};
+        function renderResultsView() {
+            const contentEl = UIManager.renderView({
+                title: `查詢結果 (${state.allData.length} 筆)`,
+                bodyHTML: getResultsHTML(),
+                footerHTML: ''
+            });
+            contentEl.querySelector('.pct-content-body').style.padding = '0';
+            contentEl.querySelector('.pct-content-footer').style.display = 'none';
 
-			contentEl.querySelector('#pct-token-ok').onclick = () => proceed(tokenInput.value.trim(), true);
-			contentEl.querySelector('#pct-token-skip').onclick = () => proceed(tokenInput.value.trim(), false);
-			contentEl.querySelector('#pct-token-close').onclick = destroy;
-		}
-
-		function showQueryView() {
-			let selectedMode = '',
-				queryInput = '',
-				selectedChannels = [];
-			const modes = [{
-				key: 'planCode',
-				label: '商品代號'
-			}, {
-				key: 'planCodeName',
-				label: '商品名稱'
-			}, {
-				key: 'allMasterPlans',
-				label: '全部主檔'
-			}, {
-				key: 'masterInSale',
-				label: '主檔現售'
-			}, {
-				key: 'masterStopped',
-				label: '主檔停售'
-			}, {
-				key: 'channelInSale',
-				label: '通路現售'
-			}, {
-				key: 'channelStopped',
-				label: '通路停售'
-			}];
-			const masterModes = modes.slice(0, 5);
-			const channelModes = modes.slice(5, 7);
-			const toHtml = (m) => `<button class="pct-query-segment-btn" data-mode="${m.key}">${m.label}</button>`;
-
-			const contentEl = UIManager.renderView({
-				title: `選擇查詢條件 (${state.env})`,
-				bodyHTML: `<div><strong>主檔查詢</strong></div><div class="pct-query-segment">${masterModes.map(toHtml).join('')}</div><div style="margin-top: 1rem;"><strong>通路查詢 (此查詢較耗時)</strong></div><div class="pct-query-segment">${channelModes.map(toHtml).join('')}</div><div id="pct-dynamic-area" style="margin-top: 1.5rem;"></div>`,
-				footerHTML: `<button id="pct-query-cancel" class="pct-btn pct-btn-secondary">關閉</button><button id="pct-query-ok" class="pct-btn pct-btn-primary">查詢</button>`
-			});
-
-			const dynamicArea = contentEl.querySelector('#pct-dynamic-area');
-			const queryBtns = contentEl.querySelectorAll('.pct-query-segment-btn');
-
-			function selectMode(btn) {
-				queryBtns.forEach(b => b.classList.remove('selected'));
-				btn.classList.add('selected');
-				selectedMode = btn.dataset.mode;
-				dynamicArea.innerHTML = getDynamicQueryHTML(selectedMode);
-				if (selectedMode === 'channelInSale' || selectedMode === 'channelStopped') {
-					dynamicArea.querySelectorAll('.pct-channel-check').forEach(chk => {
-						chk.onchange = () => {
-							selectedChannels = [...dynamicArea.querySelectorAll('.pct-channel-check:checked')].map(c => c.value);
-						};
-					});
-				}
-			}
-
-			queryBtns.forEach(btn => btn.onclick = (e) => selectMode(e.currentTarget));
-			selectMode(queryBtns[0]);
-
-			contentEl.querySelector('#pct-query-cancel').onclick = destroy;
-			contentEl.querySelector('#pct-query-ok').onclick = (e) => {
-				queryInput = contentEl.querySelector('#pct-query-input')?.value.trim() || '';
-				if (selectedMode === 'channelInSale' || selectedMode === 'channelStopped') {
-					selectedChannels = Array.from(contentEl.querySelectorAll('.pct-channel-check:checked')).map(cb => cb.value);
-				}
-
-				if (!selectedMode) {
-					UIManager.showToast({
-						message: '請選擇一個查詢模式',
-						type: 'error'
-					});
-					return;
-				}
-				if ((AppConfig.QUERY_MODES.PLAN_CODE === selectedMode || AppConfig.QUERY_MODES.PLAN_NAME === selectedMode) && !queryInput) {
-					UIManager.showToast({
-						message: '請輸入查詢內容',
-						type: 'error'
-					});
-					return;
-				}
-
-				const queryBtn = e.currentTarget;
-				queryBtn.disabled = true;
-				queryBtn.innerHTML = `<div class="pct-spinner"></div> 查詢中`;
-
-				runQuery(selectedMode, queryInput, selectedChannels).finally(() => {
-					queryBtn.disabled = false;
-					queryBtn.innerHTML = '查詢';
-				});
-			};
-		}
-
-		async function runQuery(mode, input, channels) {
-			state.isQueryCancelled = false;
-			queryAbortController = new AbortController();
-			const signal = queryAbortController.signal;
-
-			const toast = UIManager.showToast({
-				message: '查詢中...',
-				duration: 0,
-				onCancel: () => queryAbortController.abort()
-			});
-			const toastMsgEl = toast.querySelector('.pct-toast-message');
-
-			try {
-				let rawData = [];
-				const today = Utils.getTodayStr();
-
-				if (mode === AppConfig.QUERY_MODES.PLAN_CODE) {
-					const codes = input.split(/[\s,;]+/).filter(Boolean);
-					for (let i = 0; i < codes.length; i++) {
-						if (signal.aborted) throw new Error('查詢已取消');
-						toastMsgEl.textContent = `查詢中... (${i + 1}/${codes.length})`;
-						try {
-							const result = await APIService.getMasterPlans({
-								planCode: codes[i],
-								pageSize: 1
-							}, signal);
-							if (result.records?.length > 0) rawData.push(...result.records);
-							else rawData.push({
-								_isErrorRow: true,
-								planCode: codes[i],
-								_errorMsg: '查無資料'
-							});
-						} catch (e) {
-							if (signal.aborted) throw e;
-							rawData.push({
-								_isErrorRow: true,
-								planCode: codes[i],
-								_errorMsg: `查詢失敗`
-							});
-						}
-					}
-				} else if (mode === AppConfig.QUERY_MODES.CHANNEL_IN_SALE || mode === AppConfig.QUERY_MODES.CHANNEL_STOPPED) {
-					toastMsgEl.textContent = '正在獲取通路資料...';
-					const channelsToQuery = channels.length > 0 ? channels : AppConfig.FIELD_MAPS.CHANNELS;
-					let allChannelRecords = [];
-					for (const ch of channelsToQuery) {
-						const channelParam = ch === 'BK' ? 'OT' : ch;
-						const result = await APIService.getChannelSales(channelParam, signal);
-						if (result.planCodeSaleDates?.records) allChannelRecords.push(...result.planCodeSaleDates.records);
-					}
-					const filteredRecords = allChannelRecords.filter(r => Utils.getSaleStatus(today, r.saleStartDate, r.saleEndDate) === (mode === AppConfig.QUERY_MODES.CHANNEL_IN_SALE ? AppConfig.SALE_STATUS.CURRENT : AppConfig.SALE_STATUS.STOPPED));
-					const uniquePlanCodes = [...new Set(filteredRecords.map(r => r.planCode))];
-
-					for (let i = 0; i < uniquePlanCodes.length; i++) {
-						if (signal.aborted) break;
-						toastMsgEl.textContent = `正在獲取主檔資料... (${i + 1}/${uniquePlanCodes.length})`;
-						const result = await APIService.getMasterPlans({
-							planCode: uniquePlanCodes[i]
-						}, signal);
-						if (result.records) rawData.push(...result.records);
-					}
-				} else {
-					let params = {
-						pageNo: 1,
-						pageSize: AppConfig.API_FETCH_CONFIG.MASTER_PAGE_SIZE
-					};
-					if (mode === AppConfig.QUERY_MODES.PLAN_NAME) params.planCodeName = input;
-					if (mode === AppConfig.QUERY_MODES.MASTER_IN_SALE) params.saleEndDate = '9999-12-31 00:00:00';
-					const result = await APIService.getMasterPlans(params, signal);
-					rawData = result.records || [];
-					if (mode === AppConfig.QUERY_MODES.MASTER_STOPPED) {
-						rawData = rawData.filter(r => Utils.getSaleStatus(Utils.getTodayStr(), r.saleStartDate, r.saleEndDate) === AppConfig.SALE_STATUS.STOPPED);
-					}
-				}
-
-				if (signal.aborted) return;
-
-				toast.remove();
-				UIManager.showToast({
-					message: '查詢完成',
-					type: 'success'
-				});
-				state.allData = DataProcessor.processInitialData(rawData);
-				state.displayedData = state.allData;
-				state.totalPages = Math.ceil(state.allData.length / AppConfig.PAGINATION.PAGE_SIZE);
-				state.pageNo = 1;
-				renderResultsView();
-			} catch (error) {
-				if (!state.isQueryCancelled) UIManager.showToast({
-					message: `查詢失敗: ${error.message}`,
-					type: 'error'
-				});
-			} finally {
-				if (toast && toast.parentNode) toast.remove();
-			}
-		}
-
-		function renderResultsView() {
-			const contentEl = UIManager.renderView({
-				title: `查詢結果 (${state.allData.length} 筆)`,
-				bodyHTML: getResultsHTML(),
-				footerHTML: ''
-			});
-			contentEl.querySelector('.pct-content-body').style.padding = '0';
-			contentEl.querySelector('.pct-content-footer').style.display = 'none';
-
-			contentEl.querySelector('#res-requery').onclick = showQueryView;
-			contentEl.querySelector('#res-close').onclick = destroy;
-			contentEl.querySelector('#res-fetch-all').onclick = async (e) => {
-				const btn = e.currentTarget;
-				btn.disabled = true;
-				btn.innerHTML = `<div class="pct-spinner"></div> 查詢中`;
-				UIManager.showToast({
-					message: '正在查詢本頁所有通路資料...',
-					duration: 0
-				});
-				const startIndex = (state.pageNo - 1) * AppConfig.PAGINATION.PAGE_SIZE;
-				const pageItems = state.displayedData.slice(startIndex, startIndex + AppConfig.PAGINATION.PAGE_SIZE);
-				await DataProcessor.fetchAllDetails(pageItems);
-				renderResultsView();
-				UIManager.showToast({
-					message: '本頁資料查詢完畢',
-					type: 'success'
-				});
-			};
-			contentEl.querySelector('#res-copy').onclick = () => {
-				const header = "No\t代號\t商品名稱\t幣別\t單位\t類型\t主檔狀態\t銷售起日\t銷售迄日\t通路狀態\t通路起日\t通路迄日\n";
-				const rows = state.allData.map(item => {
-					const channelStatus = item.channels.map(c => `${c.name}:${c.status}`).join('; ');
-					const channelStarts = item.channels.map(c => `${c.name}:${c.startDate}`).join('; ');
-					const channelEnds = item.channels.map(c => `${c.name}:${c.endDate}`).join('; ');
-					return [item.no, item.planCode, item.name, item.currency, item.unit, item.type, item.mainStatus, item.saleStartDate, item.saleEndDate, channelStatus, channelStarts, channelEnds].join('\t');
-				}).join('\n');
-				Utils.copyToClipboard(header + rows);
-			};
-
-			contentEl.querySelectorAll('[data-retry-code]').forEach(btn => {
-				btn.onclick = async (e) => {
-					const codeToRetry = e.target.dataset.retryCode;
-					e.target.disabled = true;
-					e.target.innerHTML = `<div class="pct-spinner"></div>`;
-
-					try {
-						const result = await APIService.getMasterPlans({
-							planCode: codeToRetry,
-							pageSize: 1
-						});
-						if (result.records?.length > 0) {
-							const itemIndex = state.allData.findIndex(item => item.planCode === codeToRetry && item._isErrorRow);
-							if (itemIndex > -1) {
-								const newItem = DataProcessor.processInitialData(result.records)[0];
-								newItem.no = state.allData[itemIndex].no; // 保留原始序號
-								state.allData[itemIndex] = newItem;
-								state.displayedData = state.allData;
-								renderResultsView();
-							}
-						} else {
-							UIManager.showToast({
-								message: `代碼 ${codeToRetry} 仍查無資料`,
-								type: 'warning'
-							});
-							e.target.innerHTML = '重試';
-							e.target.disabled = false;
-						}
-					} catch (err) {
-						UIManager.showToast({
-							message: `重試失敗: ${err.message}`,
-							type: 'error'
-						});
-						e.target.innerHTML = '重試';
-						e.target.disabled = false;
-					}
-				};
-			});
-		}
-
-		return {
-			start,
-			destroy
-		};
-	})();
-
-	AppCore.start();
-
+            contentEl.querySelector('#res-requery').onclick = showQueryView;
+            contentEl.querySelector('#res-close').onclick = destroy;
+            contentEl.querySelector('#res-fetch-all').onclick = async (e) => {
+                const btn = e.currentTarget;
+                btn.disabled = true;
+                btn.innerHTML = `<div class="pct-spinner"></div> 查詢中`;
+                UIManager.showToast({ message: '正在查詢本頁所有通路資料...', duration: 0 });
+                const startIndex = (state.pageNo - 1) * AppConfig.PAGINATION.PAGE_SIZE;
+                const pageItems = state.displayedData.slice(startIndex, startIndex + AppConfig.PAGINATION.PAGE_SIZE);
+                await DataProcessor.fetchAllDetails(pageItems);
+                renderResultsView();
+                UIManager.showToast({ message: '本頁資料查詢完畢', type: 'success' });
+            };
+            contentEl.querySelector('#res-copy').onclick = () => {
+                const header = "No\t代號\t商品名稱\t幣別\t單位\t類型\t主檔狀態\t銷售起日\t銷售迄日\t通路狀態\t通路起日\t通路迄日\n";
+                const rows = state.allData.map(item => {
+                    const channelStatus = item.channels.map(c => `${c.name}:${c.status}`).join('; ');
+                    const channelStarts = item.channels.map(c => `${c.name}:${c.startDate}`).join('; ');
+                    const channelEnds = item.channels.map(c => `${c.name}:${c.endDate}`).join('; ');
+                    return [item.no, item.planCode, item.name, item.currency, item.unit, item.type, item.mainStatus, item.saleStartDate, item.saleEndDate, channelStatus, channelStarts, channelEnds].join('\t');
+                }).join('\n');
+                Utils.copyToClipboard(header + rows);
+            };
+            
+            contentEl.querySelectorAll('[data-retry-code]').forEach(btn => {
+                btn.onclick = async (e) => {
+                    const codeToRetry = e.target.dataset.retryCode;
+                    e.target.disabled = true;
+                    e.target.innerHTML = `<div class="pct-spinner"></div>`;
+                    
+                    try {
+                        const result = await APIService.getMasterPlans({ planCode: codeToRetry, pageSize: 1 });
+                        if (result.records?.length > 0) {
+                            const itemIndex = state.allData.findIndex(item => item.planCode === codeToRetry && item._isErrorRow);
+                            if (itemIndex > -1) {
+                                const newItem = DataProcessor.processInitialData(result.records)[0];
+                                newItem.no = state.allData[itemIndex].no; // 保留原始序號
+                                state.allData[itemIndex] = newItem;
+                                state.displayedData = state.allData;
+                                renderResultsView();
+                            }
+                        } else {
+                            UIManager.showToast({ message: `代碼 ${codeToRetry} 仍查無資料`, type: 'warning' });
+                            e.target.innerHTML = '重試'; e.target.disabled = false;
+                        }
+                    } catch(err) {
+                        UIManager.showToast({ message: `重試失敗: ${err.message}`, type: 'error' });
+                        e.target.innerHTML = '重試'; e.target.disabled = false;
+                    }
+                };
+            });
+        }
+        
+        return { start, destroy };
+    })();
+    
+    AppCore.start();
+    
 })();
