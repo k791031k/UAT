@@ -1171,7 +1171,7 @@
 							pageNo: 1,
 							pageSize: AppConfig.DEFAULT_QUERY_PARAMS.PAGE_SIZE_CHANNEL
 						});
-						channels = (sale.planCodeSaleDates?.records || []).map(r => ({
+						channels = (sale.planCodeSaleDates ? .records || []).map(r => ({
 							channel: Utils.channelCodeConvert(r.channel),
 							saleStartDate: Utils.formatDateForUI(r.saleStartDate), // UI 顯示 YYYYMMDD
 							saleEndDate: Utils.formatDateForUI(r.saleEndDate), // UI 顯示 YYYYMMDD
@@ -2031,7 +2031,7 @@
 				const escapedUnit = Utils.escapeHtml(row.unit);
 				const escapedCoverageType = Utils.escapeHtml(row.coverageType);
 				const escapedSaleStartDate = Utils.escapeHtml(row.saleStartDate); // UI 顯示 YYYYMMDD
-				const escapedSaleEndDate = Utils.escapeHtml(row.saleEndDate);     // UI 顯示 YYYYMMDD
+				const escapedSaleEndDate = Utils.escapeHtml(row.saleEndDate); // UI 顯示 YYYYMMDD
 				const escapedMainStatus = Utils.escapeHtml(row.mainStatus);
 				const escapedPolpln = Utils.escapeHtml(row.polpln || '');
 
