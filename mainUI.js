@@ -15,10 +15,10 @@
         width: 450px; /* 版面預設寬度 */
         max-width: 85vw; /* 最大寬度 */
         max-height: 85vh; /* 最大高度 */
-        background: rgba(255, 255, 255, 0.98);
-        border: 1px solid #e0e0e0;
-        border-radius: 12px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        background: rgba(255, 255, 255, 0.95); /* 稍微降低透明度，更融入頁面 */
+        border: 1px solid #d0d0d0; /* 邊框顏色稍微加深 */
+        border-radius: 10px; /* 圓角稍微小一點 */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 陰影更柔和，減少突出感 */
         z-index: 99999; /* 確保 UI 在最頂層 */
         font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
         color: #333;
@@ -26,8 +26,8 @@
         flex-direction: column;
         overflow: hidden; /* 隱藏溢出內容，保持圓角 */
         resize: both; /* 允許調整大小 */
-        min-width: 300px;
-        min-height: 100px; /* 最小高度 */
+        min-width: 500px; /* 更新為最小寬度 500px */
+        min-height: 60px; /* 更新為最小高度 60px */
         transition: height 0.3s ease-out, max-height 0.3s ease-out; /* 高度變化增加過渡效果 */
     `;
 
@@ -37,10 +37,10 @@
             justify-content: space-between;
             align-items: center;
             padding: 8px 20px;
-            background-color: #f8f8f8;
-            border-bottom: 1px solid #eee;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
+            background-color: #f5f5f5; /* 標題背景顏色稍微調整 */
+            border-bottom: 1px solid #e5e5e5; /* 標題底部邊框顏色調整 */
+            border-top-left-radius: 9px; /* 配合主容器圓角 */
+            border-top-right-radius: 9px;
             cursor: grab;
         ">
             <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #555;">我的自動化工具</h2>
@@ -48,14 +48,15 @@
                 <button class="toggle-btn" style="
                     background: none;
                     border: none;
-                    font-size: 20px; /* 箭頭大小 */
+                    font-size: 20px;
                     line-height: 1;
                     color: #888;
                     cursor: pointer;
                     margin-right: 10px;
                     transition: transform 0.2s ease-in-out, color 0.2s ease-in-out;
-                    transform: rotate(0deg); /* 預設向上，表示展開狀態 */
-                ">&#x2303;</button> <button class="close-btn" style="
+                    transform: rotate(0deg);
+                ">&#x2303;</button>
+                <button class="close-btn" style="
                     background: none;
                     border: none;
                     font-size: 26px;
@@ -201,26 +202,6 @@
             const buttonType = button.classList.contains('type-utility') ? 'utility' :
                                  (button.classList.contains('type-dangerous') ? 'dangerous' : 'action');
 
-            button.addEventListener('click', (event) => {
-                const scriptToExecute = event.target.dataset.script;
-                if (scriptToExecute.startsWith('javascript:')) {
-                    const jsCode = scriptToExecute.substring(11);
-                    try {
-                        (function() {
-                            eval(jsCode);
-                        })();
-                    } catch (e) {
-                        console.error("執行功能腳本時發生錯誤:", e);
-                        alert("執行功能腳本時發生錯誤，請檢查開發者工具控制台。");
-                    }
-                } else {
-                    console.error("無效的 action_script 格式:", scriptToExecute);
-                    alert("無效的功能腳本格式。");
-                }
-                uiContainer.remove();
-            });
-
-            // 根據類型添加按鈕的 hover 和 active 樣式 (JS 模擬 CSS)
             const applyButtonStyles = (btn, type) => {
                 let bgColorHover, bgColorActive, bgColorNormal;
                 if (type === 'utility') {
@@ -256,6 +237,25 @@
                 });
             };
             applyButtonStyles(button, buttonType);
+
+            button.addEventListener('click', (event) => {
+                const scriptToExecute = event.target.dataset.script;
+                if (scriptToExecute.startsWith('javascript:')) {
+                    const jsCode = scriptToExecute.substring(11);
+                    try {
+                        (function() {
+                            eval(jsCode);
+                        })();
+                    } catch (e) {
+                        console.error("執行功能腳本時發生錯誤:", e);
+                        alert("執行功能腳本時發生錯誤，請檢查開發者工具控制台。");
+                    }
+                } else {
+                    console.error("無效的 action_script 格式:", scriptToExecute);
+                    alert("無效的功能腳本格式。");
+                }
+                uiContainer.remove();
+            });
         });
     })
     .catch(error => {
