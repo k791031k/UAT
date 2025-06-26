@@ -1171,7 +1171,7 @@
 							pageNo: 1,
 							pageSize: AppConfig.DEFAULT_QUERY_PARAMS.PAGE_SIZE_CHANNEL
 						});
-						channels = (sale.planCodeSaleDates ? .records || []).map(r => ({
+						channels = (sale.planCodeSaleDates ?.records || []).map(r => ({
 							channel: Utils.channelCodeConvert(r.channel),
 							saleStartDate: Utils.formatDateForUI(r.saleStartDate), // UI 顯示 YYYYMMDD
 							saleEndDate: Utils.formatDateForUI(r.saleEndDate), // UI 顯示 YYYYMMDD
