@@ -141,7 +141,15 @@
 
     // 獲取功能數據
     fetch('https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/functions.json')
-    // ***** 注意: 從這裡開始複製你從 bookmarklet_updater.html 產生的程式碼片段 *****
+    // ***** 替換區塊開始 *****
+    // 將你在 bookmarklet_editor.html 產生的程式碼片段，貼到這裡
+    // 它是從 .then(response => { ... }) 開始，到 .catch(error => { ... }); 結束的完整區塊。
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.length === 0) {
             functionTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; font-size: 14px;">目前沒有可用的功能。</td></tr>`;
@@ -214,8 +222,7 @@
 
             // 根據類型添加按鈕的 hover 和 active 樣式 (JS 模擬 CSS)
             const applyButtonStyles = (btn, type) => {
-                let bgColorHover, bgColorActive;
-                let bgColorNormal;
+                let bgColorHover, bgColorActive, bgColorNormal;
                 if (type === 'utility') {
                     bgColorNormal = '#007bff';
                     bgColorHover = '#0069d9';
@@ -270,7 +277,7 @@
         toggleBtn.style.transform = 'rotate(0deg)';
         isContentVisible = true;
     });
-    // ***** 複製到這裡結束 *****
+    // ***** 替換區塊結束 *****
 
     function escapeHtml(unsafe) {
         return unsafe
