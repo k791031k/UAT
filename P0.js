@@ -170,7 +170,7 @@
 		 * @returns {string} 轉換後的通路代碼。
 		 */
 		function channelCodeConvert(code) {
-			return code === 'OT' ? 'BK' : code;
+			return code === 'OT'? 'BK' : code;
 		}
 
 		/**
@@ -1171,7 +1171,7 @@
 							pageNo: 1,
 							pageSize: AppConfig.DEFAULT_QUERY_PARAMS.PAGE_SIZE_CHANNEL
 						});
-						channels = (sale.planCodeSaleDates ?.records || []).map(r => ({
+						channels = (sale.planCodeSaleDates?.records || []).map(r => ({
 							channel: Utils.channelCodeConvert(r.channel),
 							saleStartDate: Utils.formatDateForUI(r.saleStartDate), // UI 顯示 YYYYMMDD
 							saleEndDate: Utils.formatDateForUI(r.saleEndDate), // UI 顯示 YYYYMMDD
@@ -1241,20 +1241,20 @@
 					const dateA = new Date(Utils.formatDateForComparison(valA));
 					const dateB = new Date(Utils.formatDateForComparison(valB));
 					if (isNaN(dateA) && isNaN(dateB)) return 0;
-					if (isNaN(dateA)) return sortAsc ? 1 : -1;
-					if (isNaN(dateB)) return sortAsc ? -1 : 1;
-					if (dateA > dateB) return sortAsc ? 1 : -1;
-					if (dateA < dateB) return sortAsc ? -1 : 1;
+					if (isNaN(dateA)) return sortAsc? 1 : -1;
+					if (isNaN(dateB)) return sortAsc? -1 : 1;
+					if (dateA > dateB) return sortAsc? 1 : -1;
+					if (dateA < dateB) return sortAsc? -1 : 1;
 					return 0;
 				}
 
-				if (valA === undefined || valA === null) return sortAsc ? 1 : -1;
-				if (valB === undefined || valB === null) return sortAsc ? -1 : 1;
+				if (valA === undefined || valA === null) return sortAsc? 1 : -1;
+				if (valB === undefined || valB === null) return sortAsc? -1 : 1;
 				if (typeof valA === 'string' && typeof valB === 'string') {
-					return sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+					return sortAsc? valA.localeCompare(valB) : valB.localeCompare(valA);
 				}
-				if (valA > valB) return sortAsc ? 1 : -1;
-				if (valA < valB) return sortAsc ? -1 : 1;
+				if (valA > valB) return sortAsc? 1 : -1;
+				if (valA < valB) return sortAsc? -1 : 1;
 				return 0;
 			});
 		}
@@ -1312,7 +1312,7 @@
 		// ====== 啟動入口 ======
 		async function start() {
 			env = detectEnv();
-			apiBase = env === 'PROD' ?
+			apiBase = env === 'PROD'?
 				AppConfig.API_ENDPOINTS.PROD :
 				AppConfig.API_ENDPOINTS.UAT;
 
@@ -1366,7 +1366,7 @@
 		}
 
 		function envLabel() {
-			return env === 'PROD' ? '正式環境' : '測試環境';
+			return env === 'PROD'? '正式環境' : '測試環境';
 		}
 
 		// ====== Token 輸入與驗證流程 ======
@@ -1741,12 +1741,12 @@
 					);
 					currentTotalRecords = rawRecords.length;
 				} else if ([AppConfig.QUERY_MODES.CHANNEL_IN_SALE, AppConfig.QUERY_MODES.CHANNEL_STOPPED].includes(queryMode)) {
-					const channelsToQuery = queryChannels.length > 0 ? queryChannels : AppConfig.FIELD_MAPS.CHANNELS;
+					const channelsToQuery = queryChannels.length > 0? queryChannels : AppConfig.FIELD_MAPS.CHANNELS;
 					let allChannelRecords = [];
 					for (const channel of channelsToQuery) {
 						const baseParams = {
 							"channel": channel,
-							"saleEndDate": (queryMode === AppConfig.QUERY_MODES.CHANNEL_IN_SALE) ? "9999-12-31 00:00:00" : "",
+							"saleEndDate": (queryMode === AppConfig.QUERY_MODES.CHANNEL_IN_SALE)? "9999-12-31 00:00:00" : "",
 							"pageIndex": 1,
 							"size": AppConfig.DEFAULT_QUERY_PARAMS.PAGE_SIZE_CHANNEL,
 							"orderBys": ["planCode asc"]
@@ -1902,7 +1902,7 @@
 
 		// ====== 表格渲染與互動 ======
 		function renderTable() {
-			let displayedData = filterSpecial ?
+			let displayedData = filterSpecial?
 				allProcessedData.filter(r => r.special) : allProcessedData;
 			const totalPages = Math.ceil(displayedData.length / pageSize);
 			const startIndex = (pageNo - 1) * pageSize;
@@ -1917,13 +1917,13 @@
 				title: `查詢結果（${envLabel()}）`,
 				body: renderSummary(displayedData, hasSpecialData) + renderTableHTML(pageData),
 				footer: `
-                    <button class="pct-btn pct-btn-secondary" id="pct-table-prev" ${!hasPrev ? 'disabled' : ''}>上一頁</button>
-                    <button class="pct-btn pct-btn-secondary" id="pct-table-next" ${!hasNext ? 'disabled' : ''}>下一頁</button>
+                    <button class="pct-btn pct-btn-secondary" id="pct-table-prev" ${!hasPrev? 'disabled' : ''}>上一頁</button>
+                    <button class="pct-btn pct-btn-secondary" id="pct-table-next" ${!hasNext? 'disabled' : ''}>下一頁</button>
                     <div class="pct-pagination-info">第 ${pageNo} 頁 / 共 ${totalPages} 頁 (總計 ${displayedData.length} 筆)</div>
                     <div style="flex-grow:1;"></div>
                     <button class="pct-btn pct-btn-info" id="pct-table-detail">一鍵查詢全部詳細</button>
                     <button class="pct-btn pct-btn-success" id="pct-table-copy">一鍵複製</button>
-                    ${hasSpecialData ? `<button class="pct-btn ${filterSpecial ? 'pct-filter-btn-active' : 'pct-filter-btn'}" id="pct-table-filter">${filterSpecial ? '顯示全部' : '篩選特殊狀態'}</button>` : ''}
+                    ${hasSpecialData? `<button class="pct-btn ${filterSpecial? 'pct-filter-btn-active' : 'pct-filter-btn'}" id="pct-table-filter">${filterSpecial? '顯示全部' : '篩選特殊狀態'}</button>` : ''}
                     <button class="pct-btn" id="pct-table-requery">重新查詢</button>
                     <button class="pct-btn pct-btn-secondary" id="pct-table-close">關閉</button>
                 `,
@@ -2036,12 +2036,12 @@
 				const escapedPolpln = Utils.escapeHtml(row.polpln || '');
 
 				const channelHtml = (row.channels || []).map(c => {
-					const statusClass = c.status === AppConfig.SALE_STATUS.CURRENT ? 'pct-status-onsale' : (c.status === AppConfig.SALE_STATUS.STOPPED ? 'pct-status-offsale' : (c.status === AppConfig.SALE_STATUS.ABNORMAL ? 'pct-status-abnormal' : 'pct-status-pending'));
+					const statusClass = c.status === AppConfig.SALE_STATUS.CURRENT? 'pct-status-onsale' : (c.status === AppConfig.SALE_STATUS.STOPPED? 'pct-status-offsale' : (c.status === AppConfig.SALE_STATUS.ABNORMAL? 'pct-status-abnormal' : 'pct-status-pending'));
 					return `<span class="${statusClass}">${Utils.escapeHtml(c.channel)}:${Utils.escapeHtml(c.saleEndDate)}（${Utils.escapeHtml(c.status)}）</span>`;
 				}).join('<br>');
 
 				html += `
-                    <tr${row.special ? ' class="special-row"' : ''}>
+                    <tr${row.special? ' class="special-row"' : ''}>
                         <td>${row.no}</td>
                         <td>${escapedPlanCode}</td>
                         <td>${escapedShortName}</td>
@@ -2050,7 +2050,7 @@
                         <td>${escapedCoverageType}</td>
                         <td>${escapedSaleStartDate}</td>
                         <td>${escapedSaleEndDate}</td>
-                        <td class="${row.mainStatus === AppConfig.SALE_STATUS.CURRENT ? 'pct-status-onsale' : row.mainStatus === AppConfig.SALE_STATUS.STOPPED ? 'pct-status-offsale' : (row.mainStatus === AppConfig.SALE_STATUS.ABNORMAL ? 'pct-status-abnormal' : 'pct-status-pending')}">${escapedMainStatus}</td>
+                        <td class="${row.mainStatus === AppConfig.SALE_STATUS.CURRENT? 'pct-status-onsale' : row.mainStatus === AppConfig.SALE_STATUS.STOPPED? 'pct-status-offsale' : (row.mainStatus === AppConfig.SALE_STATUS.ABNORMAL? 'pct-status-abnormal' : 'pct-status-pending')}">${escapedMainStatus}</td>
                         <td>${escapedPolpln}</td>
                         <td>${channelHtml}</td>
                     </tr>
