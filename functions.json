@@ -1,0 +1,38 @@
+[
+  {
+    "id": "複製當前頁面標題和網址",
+    "description": "將目前網頁的標題和 URL 複製到剪貼簿。",
+    "type": "utility",
+    "action_script": "javascript:(() => {const title = document.title; const url = window.location.href; navigator.clipboard.writeText(`${title}\\n${url}`).then(() => alert('頁面標題和網址已複製！')).catch(err => console.error('複製失敗:', err));})();"
+  },
+  {
+    "id": "高亮頁面所有圖片",
+    "description": "用紅色邊框高亮顯示頁面上的所有圖片。",
+    "type": "utility",
+    "action_script": "javascript:(() => {document.querySelectorAll('img').forEach(img => {img.style.border = '2px solid red';}); alert('頁面圖片已高亮！');})();"
+  },
+  {
+    "id": "滾動到頁面底部",
+    "description": "自動滾動到當前網頁的最底部。",
+    "type": "action",
+    "action_script": "javascript:window.scrollTo(0, document.body.scrollHeight);"
+  },
+  {
+    "id": "自定義彈出訊息",
+    "description": "彈出一個可自定義的提示訊息。",
+    "type": "action",
+    "action_script": "javascript:alert('這是你的自定義訊息！');"
+  },
+  {
+    "id": "在控制台印出Hello",
+    "description": "在瀏覽器的開發者工具控制台中印出 'Hello World!'。",
+    "type": "utility",
+    "action_script": "javascript:console.log('Hello World!');"
+  },
+  {
+    "id": "警告：清空 localStorage",
+    "description": "這將清空當前網域的所有 Local Storage 數據，請謹慎使用！",
+    "type": "dangerous",
+    "action_script": "javascript:(() => { if(confirm('你確定要清空當前網域的 Local Storage 嗎？這將導致部分網站登出或數據丟失！')) { localStorage.clear(); alert('Local Storage 已清空！'); } })();"
+  }
+]
