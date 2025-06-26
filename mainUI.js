@@ -71,7 +71,6 @@
             overflow-y: auto;
             flex-grow: 1;
             transition: opacity 0.3s ease-out, max-height 0.3s ease-out;
-            /* 內容預設為顯示，不需要初始 max-height: 0; */
         ">
             <table id="functionTable" style="
                 width: 100%;
@@ -108,33 +107,28 @@
     const toggleBtn = document.querySelector('#myBookmarkletUI .toggle-btn');
     const contentDiv = document.querySelector('#myBookmarkletUI .content');
     let isContentVisible = true; // 追蹤內容是否可見，預設為 true (展開)
-    
-    // 注意: initialMaxHeight 必須在 contentDiv 首次渲染後才能準確獲取
-    // 我們將使用 'unset' 或一個很大的值來模擬 '自動' 高度
-    // 或者在展開時，根據內容實際高度計算 max-height
-    // 但為了簡化和確保流暢性，使用 unset 搭配 overflow: hidden 其實效果最好
 
     toggleBtn.addEventListener('click', () => {
         if (isContentVisible) {
             // 收合
             contentDiv.style.opacity = '0';
-            contentDiv.style.maxHeight = '0'; // 內容高度縮為0
-            contentDiv.style.paddingTop = '0'; // 移除內容區的上下 padding
+            contentDiv.style.maxHeight = '0';
+            contentDiv.style.paddingTop = '0';
             contentDiv.style.paddingBottom = '0';
-            uiContainer.style.maxHeight = `${uiContainer.querySelector('.header').offsetHeight}px`; // UI容器高度縮為header高度
+            uiContainer.style.maxHeight = `${uiContainer.querySelector('.header').offsetHeight}px`;
             uiContainer.style.overflow = 'hidden';
-            uiContainer.style.resize = 'none'; // 禁用調整大小
-            toggleBtn.style.transform = 'rotate(180deg)'; // 箭頭向下
+            uiContainer.style.resize = 'none';
+            toggleBtn.style.transform = 'rotate(180deg)';
         } else {
             // 展開
             contentDiv.style.opacity = '1';
-            contentDiv.style.maxHeight = 'unset'; // 恢復內容高度
-            contentDiv.style.paddingTop = '15px'; // 恢復內容區的上下 padding
+            contentDiv.style.maxHeight = 'unset';
+            contentDiv.style.paddingTop = '15px';
             contentDiv.style.paddingBottom = '15px';
-            uiContainer.style.maxHeight = '85vh'; // 恢復 UI 容器最大高度 (使用原設定值)
-            uiContainer.style.overflow = 'hidden'; // 保持隱藏溢出
-            uiContainer.style.resize = 'both'; // 恢復調整大小
-            toggleBtn.style.transform = 'rotate(0deg)'; // 箭頭向上
+            uiContainer.style.maxHeight = '85vh';
+            uiContainer.style.overflow = 'hidden';
+            uiContainer.style.resize = 'both';
+            toggleBtn.style.transform = 'rotate(0deg)';
         }
         isContentVisible = !isContentVisible;
     });
@@ -147,112 +141,145 @@
 
     // 獲取功能數據
     fetch('https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/functions.json')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.length === 0) {
-                functionTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; font-size: 14px;">目前沒有可用的功能。</td></tr>`;
-                // 即使沒有數據，也保持展開狀態，讓使用者看到「沒有可用的功能」訊息
-                // 不需要執行收合邏輯
-                return;
-            }
+    // ***** 注意: 從這裡開始複製你從 bookmarklet_updater.html 產生的程式碼片段 *****
+    .then(data => {
+        if (data.length === 0) {
+            functionTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; font-size: 14px;">目前沒有可用的功能。</td></tr>`;
+            return;
+        }
 
-            data.forEach((func, index) => {
-                const row = functionTableBody.insertRow();
-                row.style.cssText = `
-                    background-color: ${index % 2 === 0 ? '#fdfdfd' : 'white'};
-                    transition: background-color 0.1s ease-in-out;
-                `;
-                row.onmouseover = () => row.style.backgroundColor = '#f0f0f0';
-                row.onmouseout = () => row.style.backgroundColor = `${index % 2 === 0 ? '#fdfdfd' : 'white'}`;
+        // 定義按鈕類型到 CSS 類名的映射 (在 mainUI.js 內部也會用到)
+        const buttonTypeClasses = {
+            'action': 'type-action',
+            'utility': 'type-utility',
+            'dangerous': 'type-dangerous'
+        };
 
-                row.innerHTML = `
-                    <td style="padding: 10px 12px; border: 1px solid #e9e9e9;">${index + 1}</td>
-                    <td style="padding: 10px 12px; border: 1px solid #e9e9e9;">${func.id}</td>
-                    <td style="padding: 10px 12px; border: 1px solid #e9e9e9;">${func.description}</td>
-                    <td style="padding: 10px 12px; border: 1px solid #e9e9e9;">
-                        <button class="execute-btn" data-script="${func.action_script}" style="
-                            padding: 6px 12px;
-                            background-color: #28a745;
-                            color: white;
-                            border: none;
-                            border-radius: 5px;
-                            cursor: pointer;
-                            font-size: 13px;
-                            font-weight: 500;
-                            transition: background-color 0.2s ease-in-out, transform 0.1s ease;
-                            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-                        ">執行</button>
-                    </td>
-                `;
-            });
-
-            // 為所有執行按鈕添加事件監聽器
-            functionTableBody.querySelectorAll('.execute-btn').forEach(button => {
-                button.addEventListener('click', (event) => {
-                    const scriptToExecute = event.target.dataset.script;
-                    if (scriptToExecute.startsWith('javascript:')) {
-                        const jsCode = scriptToExecute.substring(11);
-                        try {
-                            (function() {
-                                eval(jsCode);
-                            })();
-                        } catch (e) {
-                            console.error("執行功能腳本時發生錯誤:", e);
-                            alert("執行功能腳本時發生錯誤，請檢查開發者工具控制台。");
-                        }
-                    } else {
-                        console.error("無效的 action_script 格式:", scriptToExecute);
-                        alert("無效的功能腳本格式。");
-                    }
-                    uiContainer.remove(); // 執行後關閉 UI
-                });
-
-                // 添加按鈕的 hover 和 active 樣式 (JS 模擬 CSS)
-                button.addEventListener('mouseover', () => {
-                    button.style.backgroundColor = '#218838';
-                    button.style.transform = 'translateY(-1px)';
-                });
-                button.addEventListener('mouseout', () => {
-                    button.style.backgroundColor = '#28a745';
-                    button.style.transform = 'translateY(0)';
-                });
-                button.addEventListener('mousedown', () => {
-                    button.style.backgroundColor = '#1e7e34';
-                    button.style.transform = 'translateY(0)';
-                    button.style.boxShadow = 'inset 0 2px 5px rgba(0,0,0,0.2)';
-                });
-                button.addEventListener('mouseup', () => {
-                    button.style.backgroundColor = '#218838';
-                    button.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
-                });
-            });
-        })
-        .catch(error => {
-            console.error('載入功能資料失敗:', error);
-            uiContainer.querySelector('.content').innerHTML = `
-                <p style="color: red; text-align: center; margin-top: 20px; font-size: 14px;">
-                    載入功能資料失敗！<br>
-                    請檢查 <code style="background-color:#ffebeb; padding: 2px 4px; border-radius: 3px;">functions.json</code> 路徑或網路連線。<br>
-                    錯誤訊息: ${error.message}
-                </p>
+        data.forEach((func, index) => {
+            const row = functionTableBody.insertRow();
+            row.style.cssText = `
+                background-color: ${index % 2 === 0 ? '#fdfdfd' : 'white'};
+                transition: background-color 0.1s ease-in-out;
             `;
-            // **錯誤時不再自動收合，而是保持展開狀態顯示錯誤訊息**
-            // 確保 contentDiv 處於可見狀態
-            contentDiv.style.opacity = '1';
-            contentDiv.style.maxHeight = 'unset';
-            contentDiv.style.paddingTop = '15px';
-            contentDiv.style.paddingBottom = '15px';
-            uiContainer.style.maxHeight = '85vh'; // 恢復最大高度
-            uiContainer.style.overflow = 'hidden';
-            uiContainer.style.resize = 'both';
-            toggleBtn.style.transform = 'rotate(0deg)'; // 確保箭頭顯示向上
-            isContentVisible = true; // 設置狀態為展開
+            row.onmouseover = () => row.style.backgroundColor = '#f0f0f0';
+            row.onmouseout = () => row.style.backgroundColor = `${index % 2 === 0 ? '#fdfdfd' : 'white'}`;
+
+            // 根據 type 屬性決定按鈕的 CSS 類別
+            const buttonType = func.type && buttonTypeClasses[func.type] ? func.type : 'action';
+            const buttonClass = buttonTypeClasses[buttonType];
+
+            row.innerHTML = `
+                <td style="padding: 10px 12px; border: 1px solid #e9e9e9;">${index + 1}</td>
+                <td style="padding: 10px 12px; border: 1px solid #e9e9e9;">${escapeHtml(func.id || '')}</td>
+                <td style="padding: 10px 12px; border: 1px solid #e9e9e9;">${escapeHtml(func.description || '')}</td>
+                <td style="padding: 10px 12px; border: 1px solid #e9e9e9;">
+                    <button class="execute-btn ${buttonClass}" data-script="${escapeHtml(func.action_script || '')}" style="
+                        padding: 6px 12px;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 13px;
+                        font-weight: 500;
+                        transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                    ">執行</button>
+                </td>
+            `;
         });
+
+        // 為所有執行按鈕添加事件監聽器
+        functionTableBody.querySelectorAll('.execute-btn').forEach(button => {
+            const buttonType = button.classList.contains('type-utility') ? 'utility' :
+                                 (button.classList.contains('type-dangerous') ? 'dangerous' : 'action');
+
+            button.addEventListener('click', (event) => {
+                const scriptToExecute = event.target.dataset.script;
+                if (scriptToExecute.startsWith('javascript:')) {
+                    const jsCode = scriptToExecute.substring(11);
+                    try {
+                        (function() {
+                            eval(jsCode);
+                        })();
+                    } catch (e) {
+                        console.error("執行功能腳本時發生錯誤:", e);
+                        alert("執行功能腳本時發生錯誤，請檢查開發者工具控制台。");
+                    }
+                } else {
+                    console.error("無效的 action_script 格式:", scriptToExecute);
+                    alert("無效的功能腳本格式。");
+                }
+                uiContainer.remove();
+            });
+
+            // 根據類型添加按鈕的 hover 和 active 樣式 (JS 模擬 CSS)
+            const applyButtonStyles = (btn, type) => {
+                let bgColorHover, bgColorActive;
+                let bgColorNormal;
+                if (type === 'utility') {
+                    bgColorNormal = '#007bff';
+                    bgColorHover = '#0069d9';
+                    bgColorActive = '#0056b3';
+                } else if (type === 'dangerous') {
+                    bgColorNormal = '#dc3545';
+                    bgColorHover = '#c82333';
+                    bgColorActive = '#bd2130';
+                } else { // 'action' 預設
+                    bgColorNormal = '#28a745';
+                    bgColorHover = '#218838';
+                    bgColorActive = '#1e7e34';
+                }
+
+                btn.addEventListener('mouseover', () => {
+                    btn.style.backgroundColor = bgColorHover;
+                    btn.style.transform = 'translateY(-1px)';
+                });
+                btn.addEventListener('mouseout', () => {
+                    btn.style.backgroundColor = bgColorNormal;
+                    btn.style.transform = 'translateY(0)';
+                });
+                btn.addEventListener('mousedown', () => {
+                    btn.style.backgroundColor = bgColorActive;
+                    btn.style.transform = 'translateY(0)';
+                    btn.style.boxShadow = 'inset 0 2px 5px rgba(0,0,0,0.2)';
+                });
+                btn.addEventListener('mouseup', () => {
+                    btn.style.backgroundColor = bgColorHover;
+                    btn.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+                });
+            };
+            applyButtonStyles(button, buttonType);
+        });
+    })
+    .catch(error => {
+        console.error('載入功能資料失敗:', error);
+        uiContainer.querySelector('.content').innerHTML = `
+            <p style="color: red; text-align: center; margin-top: 20px; font-size: 14px;">
+                載入功能資料失敗！<br>
+                請檢查 <code style="background-color:#ffebeb; padding: 2px 4px; border-radius: 3px;">functions.json</code> 路徑或網路連線。<br>
+                錯誤訊息: ${error.message}
+            </p>
+        `;
+        contentDiv.style.opacity = '1';
+        contentDiv.style.maxHeight = 'unset';
+        contentDiv.style.paddingTop = '15px';
+        contentDiv.style.paddingBottom = '15px';
+        uiContainer.style.maxHeight = '85vh';
+        uiContainer.style.overflow = 'hidden';
+        uiContainer.style.resize = 'both';
+        toggleBtn.style.transform = 'rotate(0deg)';
+        isContentVisible = true;
+    });
+    // ***** 複製到這裡結束 *****
+
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 
     // --- 拖曳功能實現 ---
     const header = uiContainer.querySelector('.header');
@@ -277,7 +304,7 @@
 
         uiContainer.style.left = `${newX}px`;
         uiContainer.style.top = `${newY}px`;
-        uiContainer.style.transform = 'none'; // 拖曳時移除 transform 以精確定位
+        uiContainer.style.transform = 'none';
     });
 
     document.addEventListener('mouseup', () => {
