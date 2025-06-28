@@ -1,0 +1,94 @@
+@@ -1,94 +0,0 @@
+[
+  {
+    "id": "A17.06",
+    "description": "A17.06",
+    "category": "A17查詢",
+    "action_script": "javascript:(async()=>{const API_URL_UAT='https://euisv-uat.apps.tocp4.kgilife.com.tw/euisw/euisb/api/caseQuery/query',API_URL_PROD='https://euisv.apps.ocp4.kgilife.com.tw/euisw/euisb/api/caseQuery/query',TOKEN_STORAGE_KEY='euisToken',Z_INDEX_DIALOG=2147483640,Z_INDEX_MAIN_UI=2147483630,Z_INDEX_NOTIFICATION=2147483647;let CURRENT_API_URL='',apiAuthToken=localStorage.getItem(TOKEN_STORAGE_KEY),selectedQueryDefinitionGlobal=null,originalQueryResults=[],baseA17MasterData=[],isEditMode=false,currentTableInstance={sortDirections:{},currentHeaders:[],isA17Mode:false,isCSVImportModeGlobal:false},a17ModeState={isActive:false,selectedUnits:new Set(),sortedData:[]},csvImportState={isImported:false,headers:[],selectedColumn:null,fileName:'',csvHeaders:[]};const QUERYABLE_FIELD_DEFINITIONS=[{queryApiKey:'receiptNumber',queryDisplayName:'%E9%80%81%E9%87%91%E5%96%AE%E8%99%9F%E7%A2%BC',color:'#007bff'},{queryApiKey:'applyNumber',queryDisplayName:'%E5%8F%97%E7%90%86%E8%99%9F%E7%A2%BC',color:'#6f42c1'},{queryApiKey:'policyNumber',queryDisplayName:'%E4%BF%9D%E5%96%AE%E8%99%9F%E7%A2%BC',color:'#28a745'},{queryApiKey:'approvalNumber',queryDisplayName:'%E7%A2%BA%E8%AA%8D%E6%9B%B8%E7%B7%A8%E8%99%9F',color:'#fd7e14'},{queryApiKey:'insuredId',queryDisplayName:'%E8%A2%AB%E4%BF%9D%E4%BA%BA%EF%BC%A9%EF%BC%A4',color:'#17a2b8'}],ALL_DISPLAY_FIELDS_API_KEYS_MAIN=['applyNumber','policyNumber','approvalNumber','receiptNumber','insuredId','statusCombined','uwApproverUnit','uwApprover','approvalUser'],FIELD_DISPLAY_NAMES_MAP={applyNumber:'%E5%8F%97%E7%90%86%E8%99%9F%E7%A2%BC',policyNumber:'%E4%BF%9D%E5%96%AE%E8%99%9F%E7%A2%BC',approvalNumber:'%E7%A2%BA%E8%AA%8D%E6%9B%B8%E7%B7%A8%E8%99%9F',receiptNumber:'%E9%80%81%E9%87%91%E5%96%AE',insuredId:'%E8%A2%AB%E4%BF%9D%E4%BA%BA%EF%BC%A9%EF%BC%A4',statusCombined:'%E7%8B%80%E6%85%8B',uwApproverUnit:'%E5%88%86%E5%85%AC%E5%8F%B8',uwApprover:'%E6%A0%B8%E4%BF%9D%E5%93%A1',approvalUser:'%E8%A6%86%E6%A0%B8'},UNIT_MAP_FIELD_API_KEY='uwApproverUnit',UNIT_CODE_MAPPINGS={H:'%E6%A0%B8%E4%BF%9D%E9%83%A8',B:'%E5%8C%97%E4%B8%80',C:'%E5%8F%B0%E4%B8%AD',K:'%E9%AB%98%E9%9B%84',N:'%E5%8F%B0%E5%8D%97',P:'%E5%8C%97%E4%BA%8C',T:'%E6%A1%83%E7%AB%B9',G:'%E4%BF%9D%E4%BD%9C'},A17_UNIT_BUTTONS_DEFS=[{id:'H',label:'H-%E7%B8%BD%E5%85%AC%E5%8F%B8',color:'#007bff'},{id:'B',label:'B-%E5%8C%97%E4%B8%80',color:'#28a745'},{id:'P',label:'P-%E5%8C%97%E4%BA%8C',color:'#ffc107'},{id:'T',label:'T-%E6%A1%83%E7%AB%B9',color:'#17a2b8'},{id:'C',label:'C-%E5%8F%B0%E4%B8%AD',color:'#fd7e14'},{id:'N',label:'N-%E5%8F%B0%E5%8D%97',color:'#6f42c1'},{id:'K',label:'K-%E9%AB%98%E9%9B%84',color:'#e83e8c'},{id:'UNDEF',label:'%E6%9F%A5%E7%84%A1',color:'#546e7a'}],A17_CSV_DISPLAY_HEADERS=['%E9%80%81%E9%87%91%E5%96%AE','%E7%A7%91%E7%9B%AE%E4%BB%A3%E7%A2%BC','%E5%B9%A3%E5%88%A5','%E9%A4%98%E9%A1%8D','%E5%85%A5%E5%B8%B3%E6%97%A5%E6%9C%9F','%E5%85%A5%E5%B8%B3%E4%BA%BA%E5%93%A1','%E4%BF%9D%E5%96%AE%E7%8B%80%E6%85%8B'],A17_API_DATA_DISPLAY_HEADERS=['%E5%8F%97%E7%90%86%E8%99%9F%E7%A2%BC','%E4%BF%9D%E5%96%AE%E8%99%9F%E7%A2%BC','%E7%A2%BA%E8%AA%8D%E6%9B%B8%E7%B7%A8%E8%99%9F','%E5%88%86%E5%85%AC%E5%8F%B8','%E6%A0%B8%E4%BF%9D%E5%93%A1'],A17_COPY_ONLY_HEADERS=['%E9%80%81%E9%87%91%E5%96%AE','%E7%A7%91%E7%9B%AE%E4%BB%A3%E7%A2%BC','%E5%B9%A3%E5%88%A5','%E9%A4%98%E9%A1%8D','%E5%85%A5%E5%B8%B3%E6%97%A5%E6%9C%9F','%E5%85%A5%E5%B8%B3%E4%BA%BA%E5%93%A1','%E4%BF%9D%E5%96%AE%E7%8B%80%E6%85%8B','%E4%BF%9D%E5%96%AE%E8%99%9F%E7%A2%BC','%E5%88%86%E5%85%AC%E5%8F%B8','%E6%A0%B8%E4%BF%9D%E5%93%A1','',''],A17_PARA1=\"您好，\",A17_PARA2_TEMPLATE=\"依據【管理報表：A17 新契約異常帳務】所載內容，本週報表中列示之送金單號碼，涉及多項帳務異常情形，例如：溢繳、短收、取消件需退費、無相對應之案件等問題。\",A17_PARA3=\"經逐筆查詢比對後，該等送金單應對應至下表所列之新契約案件，敬請協助確認各案件之帳務狀況，謝謝。\";let textSettings={content:A17_PARA1+'\\n\\n'+A17_PARA2_TEMPLATE+'\\n\\n'+A17_PARA3,fontSize:10.5,lineHeight:1.5};function loadTextSettings(){const saved=localStorage.getItem('qt_a17_text_settings');if(saved)try{textSettings={...textSettings,...JSON.parse(saved)}}catch(e){}}function saveTextSettings(){localStorage.setItem('qt_a17_text_settings',JSON.stringify(textSettings))}function escapeHtml(s){return s===undefined||s===null?'':String(s).replace(/[&%3C%22']/g,m=>({'&':'&','%3C':'<','%22':'','%27':'','%3E':'>'}[m]));} })();"
+  },
+  {
+    "id": "New A17序號",
+    "description": "New A17序號",
+    "category": "A17查詢",
+    "action_script": "javascript:(async()=>{const sleep=t=>new Promise(r=>setTimeout(r,t)),API_URL='https://euisv.apps.ocp4.kgilife.com.tw/euisw/euisb/api/caseQuery/query',fields=['receiptNumber','applyNumber','policyNumber','approvalNumber','mainStatus','subStatus','uwApproverUnit','uwApprover','approvalUser'],fieldNames={receiptNumber:'%E9%80%81%E9%87%91%E5%96%AE%E8%99%9F%E7%A2%BC',applyNumber:'%E5%8F%97%E7%90%86%E8%99%9F%E7%A2%BC',policyNumber:'%E4%BF%9D%E5%96%AE%E8%99%9F%E7%A2%BC',approvalNumber:'%E7%A2%BA%E8%AA%8D%E6%9B%B8%E7%B7%A8%E8%99%9F',mainStatus:'%E4%B8%BB%E7%8B%80%E6%85%8B',subStatus:'%E6%AC%A1%E7%8B%80%E6%85%8B',uwApproverUnit:{H:'%E6%A0%B8%E4%BF%9D%E9%83%A8',B:'%E5%8C%97%E4%B8%80',C:'%E5%8F%B0%E4%B8%AD',F:'%E5%8F%B0%E4%B8%AD(%E5%98%89%E7%BE%A9)',K:'%E9%AB%98%E9%9B%84',N:'%E5%8F%B0%E5%8D%97',P:'%E5%8C%97%E4%BA%8C',T:'%E6%A1%83%E7%AB%B9',G:'%E4%BF%9D%E4%BD%9C'},uwApprover:'%E6%A0%B8%E4%BF%9D%E4%BA%BA%E5%93%A1',approvalUser:'%E5%AF%A9%E6%A0%B8%E4%BA%BA%E5%93%A1'};let token=localStorage.getItem('euisToken');while(!token){token=prompt('%E6%89%BE%E4%B8%8D%E5%88%B0TOKEN%EF%BC%8C%E8%AB%8B%E8%BC%B8%E5%85%A5');if(!token)return alert('%E6%9F%A5%E8%A9%A2%E4%B8%AD%E6%AD%A2');localStorage.setItem('euisToken',token);}const input=prompt('%E8%AB%8B%E8%BC%B8%E5%85%A5%E9%80%81%E9%87%91%E5%96%AE%E8%99%9F%E7%A2%BC%EF%BC%88%E7%94%A8%E7%A9%BA%E6%A0%BC%E3%80%81%E9%80%97%E8%99%9F%E3%80%81%E5%88%86%E8%99%9F%E6%88%96%E6%8F%9B%E8%A1%8C%E5%88%86%E9%9A%94%EF%BC%89');if(!input)return;const numbers=input.split(/[\s,;\n]+/).map(x=>x.trim()).filter(Boolean);if(numbers.length===0)return alert('%E6%9C%AA%E8%BC%B8%E5%85%A5%E6%9C%89%E6%95%88%E5%96%AE%E8%99%9F');let results=[],counter=1;for(const num of numbers){let retries=3,success=false;while(retries-->0&&!success)try{const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json','SSO-TOKEN':token},body:JSON.stringify({currentPage:1,pageSize:10,receiptNumber:num})}),data=await res.json();if(data.records&&data.records.length){data.records.forEach(record=>{const row={'%E5%BA%8F%E8%99%9F':counter++,'%E9%80%81%E9%87%91%E5%96%AE%E8%99%9F%E7%A2%BC':num};fields.slice(1).forEach(f=>{if(f==='uwApproverUnit'){const apiValue=record[f]||'';let firstLetter='';for(let i=0;i<apiValue.length;i++){if(/[A-Za-z]/.test(apiValue.charAt(i))){firstLetter=apiValue.charAt(i).toUpperCase();break;}}const mappedValue=firstLetter&&fieldNames[f][firstLetter]?fieldNames[f][firstLetter]:apiValue;row['%E6%A0%B8%E4%BF%9D%E5%96%AE%E4%BD%8D']=firstLetter?firstLetter+'-'+mappedValue.replace(/^[A-Za-z]-/,''):mappedValue;}else{row[fieldNames[f]]=record[f]||''}});results.push(row)});success=true}else{const row={'%E5%BA%8F%E8%99%9F':counter++,'%E9%80%81%E9%87%91%E5%96%AE%E8%99%9F%E7%A2%BC':num};fields.slice(1).forEach(f=>row[f==='uwApproverUnit'?'%E6%A0%B8%E4%BF%9D%E5%96%AE%E4%BD%8D':fieldNames[f]]='');results.push(row);success=true}}catch(e){console.error(`%E9%8C%AF%E8%AA%A4%EF%BC%9A${num}`,e);await sleep(1000);}await sleep(1000);}let container=document.getElementById('queryPreviewContainer');if(container)container.remove();container=document.createElement('div');container.id='queryPreviewContainer';container.style='position:fixed;top:30px;left:30px;z-index:99999;background:#fff;padding:18px;border-radius:8px;box-shadow:0 4px 16px #0002;max-height:80vh;overflow:auto;font-size:14px;';const table=document.createElement('table');table.style='border-collapse:collapse;min-width:900px;';const headers=['%E5%BA%8F%E8%99%9F','%E9%80%81%E9%87%91%E5%96%AE%E8%99%9F%E7%A2%BC',...fields.slice(1).map(f=>f==='uwApproverUnit'?'... %E6%A0%B8%E4%BF%9D%E5%96%AE%E4%BD%8D':fieldNames[f])],trh=document.createElement('tr');headers.forEach(h=>{const th=document.createElement('th');th.textContent=h;th.style='border:1px solid #ccc;padding:4px 8px;background:#f6f6f6;';trh.appendChild(th);});table.appendChild(trh);results.forEach(row=>{const tr=document.createElement('tr');headers.forEach(h=>{const td=document.createElement('td');td.textContent=row[h]||'';td.style='border:1px solid #ccc;padding:4px 8px;';tr.appendChild(td)});table.appendChild(tr)});container.innerHTML='<div style=\"font-weight:bold;margin-bottom:8px;\">查詢結果預覽</div>';container.appendChild(table);const btnCopy=document.createElement('button'),btnExcel=document.createElement('button'),btnClose=document.createElement('button');btnCopy.textContent='複製';btnExcel.textContent='下載 Excel';btnClose.textContent='關閉';[btnCopy,btnExcel,btnClose].forEach(btn=>btn.style='margin:12px 8px 0 0;font-size:14px;');btnCopy.onclick=()=>{const rows=[headers,...results.map(row=>headers.map(h=>row[h]||''))];navigator.clipboard.writeText(rows.map(r=>r.join('\\t')).join('\\n')).then(()=>{btnCopy.textContent='已複製!';setTimeout(()=>btnCopy.textContent='複製',1200);})};btnExcel.onclick=async()=>{if(!window.XLSX){const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';document.body.appendChild(s);await new Promise(r=>s.onload=r);}const wb=XLSX.utils.book_new(),ws=XLSX.utils.json_to_sheet(results);XLSX.utils.book_append_sheet(wb,ws,'查詢結果');XLSX.writeFile(wb,`送金單查詢_${new Date().toISOString().slice(0,10)}.xlsx`)};btnClose.onclick=()=>container.remove();container.appendChild(document.createElement('br'));container.appendChild(btnCopy);container.appendChild(btnExcel);container.appendChild(btnClose);document.body.appendChild(container);})();"
+  }
+  [
+  {
+    "id": "A171.js",
+    "description": "A171.js",
+    "category": "a17",
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/A171.js"
+  },
+  {
+    "id": "A172.js",
+    "description": "A172.js",
+    "category": "a17",
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/A172.js"
+  },
+  {
+    "id": "EZC1.js",
+    "description": "EZC1.js",
+    "category": "ezc",
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/EZC1.js"
+  },
+  {
+    "id": "EZC2.js",
+    "description": "EZC2.js",
+    "category": "ezc",
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/EZC2.js"
+  },
+  {
+    "id": "EZC3.js",
+    "description": "EZC3.js",
+    "category": "ezc",
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/EZC3.js"
+  },
+  {
+    "id": "P0.js",
+    "description": "P0.js",
+    "category": "plan",
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P0.js"
+  },
+  {
+    "id": "P1.js",
+    "description": "P1.js",
+    "category": "plan",
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P1.js"
+  },
+  {
+    "id": "P3.js",
+    "description": "P3.js",
+    "category": "plan",
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P3.js"
+  },
+  {
+    "id": "P4.js",
+    "description": "P4.js",
+    "category": "plan",
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P4.js"
+  },
+  {
+    "id": "P5.js",
+    "description": "P5.js",
+    "category": "plan",
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P5.js"
+  },
+  {
+    "id": "P6.js",
+    "description": "P6.js",
+    "category": "plan",
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P6.js"
+  },
+  {
+    "id": "P7.js",
+    "description": "P7.js",
+    "category": "plan",
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P7.js"
+  },
+  {
+    "id": "P8.js",
+    "description": "P8.js",
+    "category": "plan",
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P8.js"
+  }
+]
