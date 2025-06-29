@@ -11,62 +11,62 @@
     "description": "A17.06 查詢工具",
     "category": "A17查詢",
     "type": "action",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/A17_06.js"
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT/A17_06.js"
   },
   {
     "id": "New A17序號",
     "description": "批量查詢送金單號碼",
     "category": "A17查詢",
     "type": "utility",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/A17_NEW.js"
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT/A17_NEW.js"
   },
   {
     "id": "A171.js",
     "description": "A17 報表工具 1",
     "category": "a17",
     "type": "action",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/A171.js"
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT/A171.js"
   },
   {
     "id": "A172.js",
     "description": "A17 報表工具 2",
     "category": "a17",
     "type": "action",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/A172.js"
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT/A172.js"
   },
   {
     "id": "EZC1.js",
     "description": "EZC 工具 1",
     "category": "ezc",
     "type": "utility",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/EZC1.js"
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT/EZC1.js"
   },
   {
     "id": "EZC2.js",
     "description": "EZC 工具 2",
     "category": "ezc",
     "type": "utility",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/EZC2.js"
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT/EZC2.js"
   },
   {
     "id": "EZC3.js",
     "description": "EZC 工具 3",
     "category": "ezc",
     "type": "utility",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/EZC3.js"
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT/EZC3.js"
   },
   {
     "id": "P0.js",
     "description": "計畫工具 0",
     "category": "plan",
     "type": "action",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P0.js"
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT/P0.js"
   },
   {
     "id": "P1.js",
-    "description": "計畫工具 1",
+    "description": "計畫工具 1",	
     "category": "plan",
     "type": "action",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P1.js"
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT/P1.js"
   }
 ]
