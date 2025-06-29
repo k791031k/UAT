@@ -1,17 +1,24 @@
 [
   {
+    "id": "清除快取工具",
+    "description": "清除瀏覽器快取、Cookie、localStorage 等",
+    "category": "系統工具",
+    "type": "utility",
+    "action_script": "javascript:(function(){let s={cookies:0,localStorage:0,sessionStorage:0,serviceWorkers:0},f=()=>{let e=document.createElement('div');e.style='position:fixed;top:20px;right:20px;padding:15px;background:#'+(s.fail?'ffebee':'e8f5e9')+';border:1px solid #'+(s.fail?'ef9a9a':'a5d6a7')+';border-radius:5px;box-shadow:0 2px 10px rgba(0,0,0,0.1);z-index:9999;max-width:300px;font-family:Arial;';e.innerHTML='<div style=\"margin-bottom:10px;font-weight:bold\">'+(s.fail?'清理完成！ (部分失敗)':'清理完成！')+'</div><div style=\"margin-bottom:8px\">✅ 成功：'+['Cookies','localStorage','sessionStorage','Service Workers'].filter(k=>s[k]).join(', ')+'</div>'+(s.fail?'<div style=\"color:#d32f2f;margin-bottom:8px\">❌ 失敗：'+s.fail+'</div>':'')+'<button style=\"padding:5px 10px;background:#2196f3;color:white;border:none;border-radius:3px;cursor:pointer;\"onclick=\"this.parentNode.remove()\">關閉</button>';document.body.appendChild(e);setTimeout(()=>e.remove(),3000);};try{document.cookie.split(';').forEach(c=>{let i=c.indexOf('='),n=i>-1?c.substr(0,i):c;document.cookie=n.trim()+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';});s.cookies=1;}catch(e){s.fail=(s.fail||'')+'Cookies ';}try{localStorage.clear();s.localStorage=1;}catch(e){s.fail=(s.fail||'')+'localStorage ';}try{sessionStorage.clear();s.sessionStorage=1;}catch(e){s.fail=(s.fail||'')+'sessionStorage ';}if('serviceWorker'in navigator&&navigator.serviceWorker.getRegistrations){navigator.serviceWorker.getRegistrations().then(r=>{r.forEach(w=>w.unregister());s.serviceWorkers=r.length>0?1:0;f();}).catch(e=>{s.fail=(s.fail||'')+'ServiceWorkers ';f();});}else{f();}})();"
+  },
+  {
     "id": "A17.06",
     "description": "A17.06 查詢工具",
     "category": "A17查詢",
     "type": "action",
-    "action_script": "javascript:(async()=>{const API_URL_UAT='https://euisv-uat.apps.tocp4.kgilife.com.tw/euisw/euisb/api/caseQuery/query',API_URL_PROD='https://euisv.apps.ocp4.kgilife.com.tw/euisw/euisb/api/caseQuery/query',TOKEN_STORAGE_KEY='euisToken';let apiAuthToken=localStorage.getItem(TOKEN_STORAGE_KEY);if(!apiAuthToken){apiAuthToken=prompt('請輸入 API Token:');if(!apiAuthToken){alert('需要 Token 才能執行查詢');return;}localStorage.setItem(TOKEN_STORAGE_KEY,apiAuthToken);}const queryInput=prompt('請輸入查詢條件（送金單號碼）:');if(!queryInput){return;}try{const response=await fetch(API_URL_PROD,{method:'POST',headers:{'Content-Type':'application/json','SSO-TOKEN':apiAuthToken},body:JSON.stringify({receiptNumber:queryInput,currentPage:1,pageSize:50})});const data=await response.json();if(data.records&&data.records.length>0){let result='查詢結果:\\n';data.records.forEach((record,index)=>{result+=`${index+1}. 受理號碼: ${record.applyNumber||'N/A'}\\n`;result+=`   保單號碼: ${record.policyNumber||'N/A'}\\n`;result+=`   狀態: ${record.statusCombined||'N/A'}\\n\\n`;});alert(result);}else{alert('查無相關資料');}}catch(error){console.error('查詢失敗:',error);alert('查詢失敗，請檢查網路連線或 Token 是否正確');}})();"
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/A17_06.js"
   },
   {
     "id": "New A17序號",
     "description": "批量查詢送金單號碼",
     "category": "A17查詢",
     "type": "utility",
-    "action_script": "javascript:(async()=>{const sleep=t=>new Promise(r=>setTimeout(r,t));const API_URL='https://euisv.apps.ocp4.kgilife.com.tw/euisw/euisb/api/caseQuery/query';let token=localStorage.getItem('euisToken');if(!token){token=prompt('找不到TOKEN，請輸入:');if(!token){alert('查詢中止');return;}localStorage.setItem('euisToken',token);}const input=prompt('請輸入送金單號碼（用空格、逗號、分號或換行分隔）:');if(!input)return;const numbers=input.split(/[\\s,;\\n]+/).map(x=>x.trim()).filter(Boolean);if(numbers.length===0){alert('未輸入有效單號');return;}let results=[];let counter=1;for(const num of numbers){try{const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json','SSO-TOKEN':token},body:JSON.stringify({currentPage:1,pageSize:10,receiptNumber:num})});const data=await res.json();if(data.records&&data.records.length){data.records.forEach(record=>{results.push({序號:counter++,送金單號碼:num,受理號碼:record.applyNumber||'',保單號碼:record.policyNumber||'',狀態:record.statusCombined||''});});}else{results.push({序號:counter++,送金單號碼:num,受理號碼:'查無資料',保單號碼:'',狀態:''});}}catch(e){console.error(`錯誤：${num}`,e);results.push({序號:counter++,送金單號碼:num,受理號碼:'查詢失敗',保單號碼:'',狀態:''});}await sleep(500);}const resultText=results.map(r=>`${r.序號}\\t${r.送金單號碼}\\t${r.受理號碼}\\t${r.保單號碼}\\t${r.狀態}`).join('\\n');navigator.clipboard.writeText('序號\\t送金單號碼\\t受理號碼\\t保單號碼\\t狀態\\n'+resultText).then(()=>{alert(`查詢完成！共 ${results.length} 筆資料已複製到剪貼簿`);}).catch(()=>{alert('查詢完成，但複製到剪貼簿失敗');});})();"
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/A17_NEW.js"
   },
   {
     "id": "A171.js",
@@ -61,47 +68,5 @@
     "category": "plan",
     "type": "action",
     "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P1.js"
-  },
-  {
-    "id": "P3.js",
-    "description": "計畫工具 3",
-    "category": "plan",
-    "type": "action",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P3.js"
-  },
-  {
-    "id": "P4.js",
-    "description": "計畫工具 4",
-    "category": "plan",
-    "type": "action",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P4.js"
-  },
-  {
-    "id": "P5.js",
-    "description": "計畫工具 5",
-    "category": "plan",
-    "type": "action",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P5.js"
-  },
-  {
-    "id": "P6.js",
-    "description": "計畫工具 6",
-    "category": "plan",
-    "type": "action",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P6.js"
-  },
-  {
-    "id": "P7.js",
-    "description": "計畫工具 7",
-    "category": "plan",
-    "type": "action",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P7.js"
-  },
-  {
-    "id": "P8.js",
-    "description": "計畫工具 8",
-    "category": "plan",
-    "type": "action",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT_TOOL_R/P8.js"
   }
 ]
