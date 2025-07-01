@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>HTML 即時預覽工具</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --border-color: #d1d5db;
+            --background-color: #f9fafb;
+            --editor-bg: #ffffff;
+            --text-color: #111827;
+            --primary-color: #3b82f6;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        header {
+            padding: 0.75rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--editor-bg);
+            text-align: center;
+            flex-shrink: 0;
+        }
+        h1 {
+            font-size: 1.25rem;
+            margin: 0;
+            color: var(--primary-color);
+        }
+        .container {
+            display: flex;
+            flex-grow: 1;
+            width: 100%;
+            height: calc(100% - 60px); /* 減去 header 的高度 */
+        }
+        .panel {
+            width: 50%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-label {
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            background-color: #e5e7eb;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .editor-panel {
+            border-right: 1px solid var(--border-color);
+        }
+        textarea, iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+        textarea {
+            padding: 1rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            background-color: var(--editor-bg);
+        }
+        textarea:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: -2px;
+        }
+        iframe {
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>HTML 即時預覽工具</h1>
+    </header>
+    
+    <div class="container">
+        <div class="panel editor-panel">
+            <div class="panel-label">HTML 原始碼編輯區</div>
+            <textarea id="source-code" placeholder="請在此輸入或貼上您的 HTML 程式碼..."></textarea>
+        </div>
+        <div class="panel preview-panel">
+            <div class="panel-label">即時預覽區</div>
+            <iframe id="preview-frame" title="HTML Preview"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const sourceCodeTextarea = document.getElementById('source-code');
+        const previewIframe = document.getElementById('preview-frame');
+
+        /**
+         * 更新預覽視窗的函式
+         */
+        function updatePreview() {
+            // 獲取 iframe 的 document 物件
+            const previewDoc = previewIframe.contentDocument || previewIframe.contentWindow.document;
+            
+            // 獲取編輯區的原始碼
+            const sourceCode = sourceCodeTextarea.value;
+            
+            // 將原始碼寫入 iframe 中
+            previewDoc.open();
+            previewDoc.write(sourceCode);
+            previewDoc.close();
+        }
+
+        /**
+         * 為編輯區新增即時輸入事件監聽
+         */
+        sourceCodeTextarea.addEventListener('input', updatePreview);
+
+        /**
+         * 頁面載入時，先填入範例程式碼並執行一次預覽
+         */
+        window.addEventListener('load', () => {
+            const initialCode = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <title>測試頁面</title>
+    <style>
+        body { 
+            font-family: sans-serif;
+            padding: 20px; 
+            background-color: #f0f8ff;
+        }
+        h1 { 
+            color: steelblue; 
+        }
+        p {
+            line-height: 1.6;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            background-color: steelblue;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>歡迎使用預覽工具！</h1>
+    <hr>
+    <p>
+        您可以在左側的編輯區輸入您的 HTML 程式碼，
+        右側的預覽區將會<b>即時</b>顯示結果。
+    </p>
+    <p>
+        甚至是 JavaScript 也可以執行喔！
+    </p>
+
+    <button onclick="alert('JavaScript 也會執行！')">點我測試</button>
+
+</body>
+</html>`;
+            
+            sourceCodeTextarea.value = initialCode;
+            updatePreview();
+        });
+
+    </script>
+</body>
+</html>
