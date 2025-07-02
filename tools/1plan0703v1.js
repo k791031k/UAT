@@ -199,16 +199,16 @@ style.textContent=`
 .pct-sub-option:hover,.pct-channel-option:hover { border-color:var(--primary-color);transform:translateY(-1px);box-shadow:0 2px 6px var(--box-shadow-light); }
 .pct-sub-option.selected,.pct-channel-option.selected { background:var(--primary-color);color:white;border-color:var(--primary-color);transform:translateY(0);box-shadow:0 1px 3px var(--primary-dark-color); }
 .pct-sub-option.selected:hover,.pct-channel-option.selected:hover { background:var(--primary-dark-color); }
-.pct-table-wrap { max-height:55vh;overflow:auto;margin:15px 0; }
+.pct-table-wrap { max-height:55vh;overflow:auto;margin:15px 0;border: 1px solid var(--border-color); border-radius: 4px; }
 .pct-table { border-collapse:collapse;width:100%;font-size:14px;background:var(--surface-color);min-width:800px; }
-.pct-table th,.pct-table td { border:1px solid #ddd;padding:8px 10px;text-align:left;vertical-align:top;cursor:pointer; }
+.pct-table th,.pct-table td { border:1px solid #ddd;padding:8px 10px;text-align:left;vertical-align:top; }
 .pct-table th { background:#f8f8f8;color:var(--text-color-dark);font-weight:bold;cursor:pointer;position:sticky;top:0;z-index:1;white-space:nowrap; }
 .pct-table th:hover { background:#e9ecef; }
 .pct-table th[data-key] { position:relative;user-select:none;padding-right:25px; }
-.pct-table th[data-key]:after { content:'↕';position:absolute;right:8px;top:50%;transform:translateY(-50%);opacity:0.3;font-size:12px;transition:opacity 0.2s; }
+.pct-table th[data-key]:after { content:'\\2195'; /* ↕ */ position:absolute;right:8px;top:50%;transform:translateY(-50%);opacity:0.3;font-size:12px;transition:opacity 0.2s; }
 .pct-table th[data-key]:hover:after { opacity:0.7; }
-.pct-table th[data-key].sort-asc:after { content:'↑';opacity:1;color:var(--primary-color);font-weight:bold; }
-.pct-table th[data-key].sort-desc:after { content:'↓';opacity:1;color:var(--primary-color);font-weight:bold; }
+.pct-table th[data-key].sort-asc:after { content:'\\2191'; /* ↑ */ opacity:1;color:var(--primary-color);font-weight:bold; }
+.pct-table th[data-key].sort-desc:after { content:'\\2193'; /* ↓ */ opacity:1;color:var(--primary-color);font-weight:bold; }
 .pct-table tr.special-row { background:#fffde7;border-left:4px solid var(--warning-color); }
 .pct-table tr:hover { background:#e3f2fd; }
 .pct-table td small { display:block;font-size:11px;color:var(--text-color-light);margin-top:2px; }
@@ -218,37 +218,40 @@ style.textContent=`
 .pct-status-abnormal { color:#8A2BE2;font-weight:bold; }
 .pct-td-copy { cursor:pointer;transition:background .15s; }
 .pct-td-copy:hover { background:#f0f7ff; }
+.pct-no-data-msg { padding: 40px 20px; text-align: center; font-size: 16px; color: var(--text-color-light); background-color: var(--background-light); border-radius: 4px; }
 .pct-search-container { margin-bottom:15px;position:relative; }
 .pct-search-input { width:100%;font-size:14px;padding:8px 35px 8px 12px;border-radius:5px;border:1px solid var(--border-color);box-sizing:border-box;transition:border-color var(--transition-speed),box-shadow var(--transition-speed); }
 .pct-search-input:focus { border-color:var(--primary-color);box-shadow:0 0 0 2px rgba(74,144,226,0.2);outline:none; }
-.pct-search-icon { position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-color-light);pointer-events:none; }
-.pct-search-clear { position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-color-light);cursor:pointer;font-size:16px;padding:2px;border-radius:3px;transition:background-color 0.2s; }
-.pct-search-clear:hover { background-color:var(--background-light); }
-.pct-toast { position:fixed;left:50%;top:30px;transform:translateX(-50%);background:var(--text-color-dark);color:#fff;padding:10px 22px;border-radius:var(--border-radius-base);font-size:16px;z-index:2147483647;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;box-shadow:0 4px 12px var(--box-shadow-medium);white-space:nowrap; }
+.pct-search-icon { position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-color-light);pointer-events:none; }
+.pct-search-clear { position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-color-light);cursor:pointer;font-size:20px;padding:0 5px;line-height:1;display:none; }
+.pct-search-clear:hover { color: var(--text-color-dark); }
+.pct-search-input:not(:placeholder-shown) ~ .pct-search-clear { display: block; }
+.pct-search-input:not(:placeholder-shown) ~ .pct-search-icon { display: none; }
+.pct-toast { position:fixed;left:50%;top:30px;transform:translateX(-50%) translateY(-20px);background:var(--text-color-dark);color:#fff;padding:10px 22px;border-radius:var(--border-radius-base);font-size:16px;z-index:2147483647;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;box-shadow:0 4px 12px var(--box-shadow-medium);white-space:nowrap; }
 .pct-toast.pct-toast-show { opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto; }
 .pct-toast.success { background:var(--success-color); }
 .pct-toast.error { background:var(--error-color); }
 .pct-toast.warning { background:var(--warning-color);color:var(--text-color-dark); }
 .pct-toast.info { background:var(--info-color); }
-.pct-summary { font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--text-color-dark); }
-.pct-summary b { color:var(--warning-color); }
+.pct-summary { font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:15px;flex-wrap:wrap;color:var(--text-color-dark); }
+.pct-summary b { color:var(--primary-color); }
 .pct-pagination { display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:15px;flex-wrap:wrap; }
 .pct-pagination-info { margin-right:auto;font-size:14px;color:var(--text-color-light); }
 @media (max-width:768px){
-  .pct-modal{min-width:unset;width:98vw;top:20px;max-height:95vh;}
+  .pct-modal{min-width:unset;width:98vw;top:10px;max-height:95vh;}
   .pct-modal-header{font-size:18px;padding:12px 15px 6px 15px;}
   .pct-modal-body{padding:12px 15px 6px 15px;}
   .pct-modal-footer{flex-direction:column;align-items:stretch;padding:10px 15px 12px 15px;}
   .pct-btn,.pct-btn-secondary,.pct-btn-info,.pct-btn-success{width:100%;margin:4px 0;padding:10px 15px;}
-  .pct-mode-card-grid{grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px;}
-  .pct-mode-card{font-size:13px;padding:10px 8px;min-height:45px;}
+  .pct-mode-card-grid{grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;}
+  .pct-mode-card{font-size:13px;padding:12px 8px;min-height:50px;}
   .pct-input{font-size:14px;padding:8px 10px;}
-  .pct-table-wrap{max-height:40vh;margin:10px 0;}
+  .pct-table-wrap{max-height:45vh;margin:10px 0;}
   .pct-table th,.pct-table td{padding:6px 8px;font-size:12px;}
   .pct-toast{top:10px;width:90%;left:5%;transform:translateX(0);text-align:center;white-space:normal;}
-  .pct-pagination{flex-direction:column;align-items:flex-start;gap:8px;}
-  .pct-pagination-info{width:100%;text-align:center;}
-  .pct-pagination .pct-btn{width:100%;}
+  .pct-pagination{flex-direction:column;align-items:center;gap:8px;}
+  .pct-pagination-info{width:100%;text-align:center;order:-1;margin-bottom:5px;}
+  .pct-pagination .pct-btn{width:auto;padding:8px 25px;}
 }
 `;
 document.head.appendChild(style);
@@ -269,7 +272,7 @@ let pageNo = 1;
 let pageSize = AppConfig.DEFAULT_QUERY_PARAMS.PAGE_SIZE_TABLE;
 let totalRecords = 0;
 let filterSpecial = false;
-let sortKey = '';
+let sortKey = 'no';
 let sortAsc = true;
 let detailQueryCount = 0;
 let searchKeyword = '';
@@ -304,20 +307,33 @@ let token = getAvailableToken();
  * ========== UI 工具函式 ==========
  * 負責 Toast 訊息、錯誤顯示、彈窗管理等 UI 相關功能
  */
-function showToast(msg, type='info', duration=1800){
+function showToast(msg, type='info', duration=2500){
   let el=document.getElementById('pct-toast');
-  if(!el){el=document.createElement('div');el.id='pct-toast';document.body.appendChild(el);}
-  el.className=`pct-toast ${type}`;el.textContent=msg;el.classList.add('pct-toast-show');
-  setTimeout(()=>{el.classList.remove('pct-toast-show');el.addEventListener('transitionend',()=>el.remove(),{once:true});},duration);
+  if(el) el.remove(); // 移除舊的，確保動畫重置
+  el=document.createElement('div');
+  el.id='pct-toast';
+  document.body.appendChild(el);
+  el.className=`pct-toast ${type}`;el.textContent=msg;
+  setTimeout(() => {
+      el.classList.add('pct-toast-show');
+  }, 10);
+  setTimeout(()=>{
+      el.classList.remove('pct-toast-show');
+      el.addEventListener('transitionend',()=>el.remove(),{once:true});
+  },duration);
 }
 
 function closeModal(){
-  const modal=document.getElementById('planCodeQueryToolInstance');
+  const modal=document.getElementById(AppConfig.TOOL_ID);
   const mask=document.getElementById('pctModalMask');
-  modal&&modal.remove();
-  mask&&mask.remove();
-  const toast=document.getElementById('pct-toast');
-  if(toast) toast.remove();
+  if(modal) {
+      modal.classList.remove('show');
+      modal.addEventListener('transitionend', () => modal.remove(), {once: true});
+  }
+  if(mask) {
+      mask.classList.remove('show');
+      mask.addEventListener('transitionend', () => mask.remove(), {once: true});
+  }
 }
 
 function showError(msg,elementId='pct-token-err'){
@@ -345,45 +361,72 @@ function showModal(html, onOpen){
     document.body.appendChild(mask);
   }
   mask.onclick=e=>{if(e.target===mask)closeModal();};
-  let modal=document.getElementById('planCodeQueryToolInstance');
+  
+  let modal=document.getElementById(AppConfig.TOOL_ID);
   if(modal) modal.remove();
+  
   modal=document.createElement('div');
   modal.className='pct-modal';
-  modal.id='planCodeQueryToolInstance';
+  modal.id=AppConfig.TOOL_ID;
   modal.setAttribute('role','dialog');
   modal.setAttribute('aria-modal','true');
   modal.setAttribute('aria-labelledby','pct-modal-title');
   modal.innerHTML=html;
   document.body.appendChild(modal);
+  
+  // Set initial position before showing
   modal.style.top='60px';modal.style.left='50%';modal.style.transform='translateX(-50%) translateY(-20px)';
-  setTimeout(()=>{mask.classList.add('show');modal.classList.add('show');modal.style.transform='translateX(-50%) translateY(0)';},10);
+  
+  setTimeout(()=>{
+      mask.classList.add('show');
+      modal.classList.add('show');
+  },10);
   
   // 拖曳功能實作
   (function(){
     let isDragging=false,currentX,currentY,initialX,initialY;
     const header=modal.querySelector('.pct-modal-header');
-    header&&header.addEventListener('mousedown',e=>{
-      isDragging=true;
-      initialX=e.clientX-modal.getBoundingClientRect().left;
-      initialY=e.clientY-modal.getBoundingClientRect().top;
-      modal.classList.add('dragging');header.classList.add('dragging');e.preventDefault();
-    });
-    document.addEventListener('mousemove',e=>{
-      if(isDragging){
-        currentX=e.clientX-initialX;currentY=e.clientY-initialY;
-        const maxX=window.innerWidth-modal.offsetWidth,maxY=window.innerHeight-modal.offsetHeight;
-        modal.style.left=`${Math.max(0,Math.min(currentX,maxX))}px`;
-        modal.style.top=`${Math.max(0,Math.min(currentY,maxY))}px`;
-        modal.style.transform='none';e.preventDefault();
-      }
-    });
-    document.addEventListener('mouseup',()=>{isDragging=false;modal.classList.remove('dragging');header&&header.classList.remove('dragging');});
+    if(!header) return;
+    
+    const dragStart = (e) => {
+        isDragging=true;
+        const event = e.type === 'mousedown' ? e : e.touches[0];
+        initialX=event.clientX-modal.getBoundingClientRect().left;
+        initialY=event.clientY-modal.getBoundingClientRect().top;
+        modal.classList.add('dragging');header.classList.add('dragging');
+        e.preventDefault();
+    };
+
+    const dragMove = (e) => {
+        if(isDragging){
+            const event = e.type === 'mousemove' ? e : e.touches[0];
+            currentX=event.clientX-initialX;currentY=event.clientY-initialY;
+            const maxX=window.innerWidth-modal.offsetWidth,maxY=window.innerHeight-modal.offsetHeight;
+            modal.style.left=`${Math.max(0,Math.min(currentX,maxX))}px`;
+            modal.style.top=`${Math.max(0,Math.min(currentY,maxY))}px`;
+            modal.style.transform='none';
+        }
+    };
+
+    const dragEnd = () => {
+        isDragging=false;
+        modal.classList.remove('dragging');header.classList.remove('dragging');
+    };
+
+    header.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', dragMove);
+    document.addEventListener('mouseup', dragEnd);
+    header.addEventListener('touchstart', dragStart, { passive: false });
+    document.addEventListener('touchmove', dragMove, { passive: false });
+    document.addEventListener('touchend', dragEnd);
   })();
   
   // ESC 鍵關閉功能
-  document.addEventListener('keydown',function escListener(e){
+  const escListener = (e) => {
     if(e.key==='Escape'){closeModal();document.removeEventListener('keydown',escListener);}
-  });
+  };
+  document.addEventListener('keydown', escListener);
+  
   if(onOpen) setTimeout(()=>onOpen(modal),50);
 }
 
@@ -396,7 +439,7 @@ async function verifyToken(tokenVal,apiBaseUrl){
     const res=await fetch(`${apiBaseUrl}/planCodeController/query`,{
       method:'POST',
       headers:{'Content-Type':'application/json','SSO-TOKEN':tokenVal},
-      body:JSON.stringify({planCode:'5105',currentPage:1,pageSize:1})
+      body:JSON.stringify({planCode:'5105',currentPage:1,pageSize:1}) // 使用一個已知存在的代碼來測試
     });
     const data=await res.json();
     return res.ok&&!!data.records;
@@ -412,7 +455,11 @@ async function callApi(endpoint,params){
   if(!response.ok){
     const errorText=await response.text();
     let errorMessage=errorText;
-    try{const errorJson=JSON.parse(errorText);if(errorJson.message){errorMessage=errorJson.message;}else if(errorJson.error){errorMessage=errorJson.error;}}catch(e){}
+    try{
+        const errorJson=JSON.parse(errorText);
+        if(errorJson.message){errorMessage=errorJson.message;}
+        else if(errorJson.error){errorMessage=errorJson.error;}
+    }catch(e){}
     throw new Error(`API 請求失敗: ${response.status} ${response.statusText} - ${errorMessage}`);
   }
   return response.json();
@@ -437,8 +484,9 @@ async function processAllDataForTable(rawData,apiBaseUrl,forceFetch=false){
         const detail=await callApi(`${apiBaseUrl}/planCodeController/queryDetail`,{planCode:item.planCode,currentPage:1,pageSize:AppConfig.DEFAULT_QUERY_PARAMS.PAGE_SIZE_DETAIL});
         polpln=(detail.records||[]).map(r=>r.polpln).filter(Boolean).join(', ');
         _cacheDetail.set(item.planCode,polpln);
-      }catch(e){polpln='';}
+      }catch(e){polpln='(查詢失敗)';}
     }else{polpln=_cacheDetail.get(item.planCode);}
+    
     let channels=item.channels||[];
     if(channels.length===0||forceFetch||!_cacheChannel.has(item.planCode)){
       try{
@@ -453,34 +501,39 @@ async function processAllDataForTable(rawData,apiBaseUrl,forceFetch=false){
         _cacheChannel.set(item.planCode,channels);
       }catch(e){channels=[];}
     }else{channels=_cacheChannel.get(item.planCode);}
+    
     const mainSaleStartDate=Utils.formatDateForUI(item.saleStartDate),mainSaleEndDate=Utils.formatDateForUI(item.saleEndDate),mainStatus=Utils.getSaleStatus(todayStr,item.saleStartDate,item.saleEndDate);
     const processedItem={no:0,planCode:item.planCode||'-',shortName:item.shortName||item.planName||'-',currency:Utils.currencyConvert(item.currency||item.cur),unit:Utils.unitConvert(item.reportInsuranceAmountUnit||item.insuranceAmountUnit),coverageType:Utils.coverageTypeConvert(item.coverageType||item.type),saleStartDate:mainSaleStartDate,saleEndDate:mainSaleEndDate,mainStatus,polpln,channels,special:false,_isErrorRow:false,_originalItem:item};
     processedItem.special=Utils.checkSpecialStatus(processedItem);
     return processedItem;
   });
-  const results=await Promise.allSettled(promises),fulfilledData=results.filter(r=>r.status==='fulfilled').map(r=>r.value);
+  const results=await Promise.allSettled(promises);
+  const fulfilledData=results.filter(r=>r.status==='fulfilled').map(r=>r.value);
   fulfilledData.forEach((item,idx)=>item.no=idx+1);
   return fulfilledData;
 }
 
-function sortData(data,sortKey,sortAsc){
-  if(!sortKey)return data;
+function sortData(data,key,asc){
+  if(!key)return data;
   return [...data].sort((a,b)=>{
-    const valA=a[sortKey],valB=b[sortKey];
-    if(sortKey.includes('Date')){
+    const valA=a[key],valB=b[key];
+    if(key.includes('Date')){
       const dateA=new Date(Utils.formatDateForComparison(valA)),dateB=new Date(Utils.formatDateForComparison(valB));
       if(isNaN(dateA)&&isNaN(dateB))return 0;
-      if(isNaN(dateA))return sortAsc?1:-1;
-      if(isNaN(dateB))return sortAsc?-1:1;
-      if(dateA>dateB)return sortAsc?1:-1;
-      if(dateA<dateB)return sortAsc?-1:1;
+      if(isNaN(dateA))return asc?1:-1;
+      if(isNaN(dateB))return asc?-1:1;
+      if(dateA>dateB)return asc?1:-1;
+      if(dateA<dateB)return asc?-1:1;
       return 0;
     }
-    if(valA===undefined||valA===null)return sortAsc?1:-1;
-    if(valB===undefined||valB===null)return sortAsc?-1:1;
-    if(typeof valA==='string'&&typeof valB==='string'){return sortAsc?valA.localeCompare(valB):valB.localeCompare(valA);}
-    if(valA>valB)return sortAsc?1:-1;
-    if(valA<valB)return sortAsc?-1:1;
+    if(key === 'no'){
+        return asc ? (a.no - b.no) : (b.no - a.no);
+    }
+    if(valA===undefined||valA===null)return asc?1:-1;
+    if(valB===undefined||valB===null)return asc?-1:1;
+    if(typeof valA==='string'&&typeof valB==='string'){return asc?valA.localeCompare(valB,'zh-Hant'):valB.localeCompare(valA,'zh-Hant');}
+    if(valA>valB)return asc?1:-1;
+    if(valA<valB)return asc?-1:1;
     return 0;
   });
 }
@@ -491,7 +544,7 @@ function sortData(data,sortKey,sortAsc){
  */
 function showTokenDialog(){
   showModal(`
-    <div class="pct-modal-header"><span id="pct-modal-title">商品查詢小工具（${env==='PROD'?'正式環境':'測試環境'}）</span></div>
+    <div class="pct-modal-header"><span id="pct-modal-title">商品查詢小工具 (${env==='PROD'?'正式環境':'測試環境'}) v${AppConfig.VERSION}</span></div>
     <div class="pct-modal-body">
       <div class="pct-form-group">
         <label for="pct-token-input" class="pct-label">請輸入 SSO-TOKEN：</label>
@@ -513,29 +566,29 @@ function showTokenDialog(){
     tokenInput.focus();
     hideError('pct-token-err');
     
-    // 驗證並繼續
-    confirmBtn.onclick=async()=>{
-      const val=tokenInput.value.trim();
-      if(!val){
-        showError('請輸入 Token','pct-token-err');
-        return;
-      }
-      showToast('檢查 Token 中...','info');
-      token=val;
-      localStorage.setItem('SSO-TOKEN',val);
-      localStorage.setItem('euisToken',val);
-      
-      const isValid=await verifyToken(val,apiBase);
-      if(isValid){
-        showToast('Token 驗證成功','success');
-        tokenCheckEnabled=true;
-        showQueryDialog();
-      }else{
-        showError('Token 驗證失敗，請重新輸入','pct-token-err');
-      }
+    const handleConfirm = async () => {
+        const val=tokenInput.value.trim();
+        if(!val){ showError('請輸入 Token','pct-token-err'); return; }
+        confirmBtn.disabled = true; confirmBtn.textContent = '檢查中...';
+        showToast('檢查 Token 中...','info');
+        token=val;
+        localStorage.setItem('SSO-TOKEN',val);
+        localStorage.setItem('euisToken',val);
+        
+        const isValid=await verifyToken(val,apiBase);
+        if(isValid){
+            showToast('Token 驗證成功','success');
+            tokenCheckEnabled=true;
+            showQueryDialog();
+        }else{
+            showError('Token 驗證失敗，請重新輸入','pct-token-err');
+            confirmBtn.disabled = false; confirmBtn.textContent = '驗證並繼續';
+        }
     };
+
+    confirmBtn.onclick = handleConfirm;
+    tokenInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleConfirm(); }});
     
-    // 略過檢核
     skipBtn.onclick=()=>{
       const val=tokenInput.value.trim();
       if(val){
@@ -548,10 +601,7 @@ function showTokenDialog(){
       showQueryDialog();
     };
     
-    // 取消
-    cancelBtn.onclick=()=>{
-      closeModal();
-    };
+    cancelBtn.onclick=()=>closeModal();
   });
 }
 
@@ -570,13 +620,13 @@ function showQueryDialog(){
     </div>
     <div class="pct-modal-footer">
       <button class="pct-btn" id="pct-query-ok">開始查詢</button>
-      <button class="pct-btn pct-btn-secondary" id="pct-query-cancel">取消</button>
       <button class="pct-btn pct-btn-secondary" id="pct-query-clear-selection">清除選擇</button>
+      <button class="pct-btn pct-btn-secondary" id="pct-query-cancel">取消</button>
     </div>
   `, modal=>{
     let currentPrimaryMode=queryMode,currentQueryInput=queryInput,currentSubOptions=[...querySubOption],currentChannels=[...queryChannels];
     const dynamicContentArea=modal.querySelector('#pct-dynamic-query-content'),modeCards=modal.querySelectorAll('#pct-mode-wrap .pct-mode-card'),queryOkBtn=modal.querySelector('#pct-query-ok'),queryCancelBtn=modal.querySelector('#pct-query-cancel'),clearSelectionBtn=modal.querySelector('#pct-query-clear-selection');
-    let debounceTimer=null;
+    
     const updateDynamicContent=()=>{
       dynamicContentArea.innerHTML='';hideError('pct-query-err');
       let inputHtml='',subOptionHtml='',channelSelectionHtml='';
@@ -586,66 +636,96 @@ function showQueryDialog(){
         case AppConfig.QUERY_MODES.PLAN_NAME:
           inputHtml=`<div class="pct-form-group"><label for="pct-query-input" class="pct-label">輸入商品名稱關鍵字：</label><textarea class="pct-input" id="pct-query-input" rows="3" placeholder="請輸入商品名稱關鍵字"></textarea></div>`;break;
         case AppConfig.QUERY_MODES.ALL_MASTER_PLANS:
-          inputHtml=`<div style="text-align: center; padding: 20px; color: var(--text-color-light);">將查詢所有主檔商品，無需輸入任何條件。</div>`;break;
+          inputHtml=`<div style="text-align: center; padding: 20px 0; color: var(--text-color-light);">將查詢所有主檔商品，無需輸入任何條件。</div>`;break;
         case 'masterDataCategory':
           subOptionHtml=`<div class="pct-form-group"><div class="pct-label">選擇主檔查詢範圍：</div><div class="pct-sub-option-grid"><div class="pct-sub-option" data-sub-option="${AppConfig.QUERY_MODES.MASTER_IN_SALE}">現售商品</div><div class="pct-sub-option" data-sub-option="${AppConfig.QUERY_MODES.MASTER_STOPPED}">停售商品</div></div></div>`;break;
         case 'channelDataCategory':
           channelSelectionHtml=`<div class="pct-form-group"><div class="pct-label">選擇通路：(可多選，不選則查詢所有通路)</div><div class="pct-channel-option-grid">${AppConfig.FIELD_MAPS.CHANNELS.map(ch=>`<div class="pct-channel-option" data-channel="${ch}">${ch}</div>`).join('')}</div></div>`;
-          subOptionHtml=`<div class="pct-form-group"><div class="pct-label">選擇通路銷售範圍：</div><div class="pct-sub-option-grid"><div class="pct-sub-option" data-sub-option="${AppConfig.QUERY_MODES.CHANNEL_IN_SALE}">現售通路</div><div class="pct-sub-option" data-sub-option="${AppConfig.QUERY_MODES.CHANNEL_STOPPED}">停售通路</div></div></div>`;break;
+          subOptionHtml=`<div class="pct-form-group"><div class="pct-label">選擇通路銷售範圍：</div><div class="pct-sub-option-grid"><div class="pct-sub-option" data-sub-option="${AppConfig.QUERY_MODES.CHANNEL_IN_SALE}">通路現售</div><div class="pct-sub-option" data-sub-option="${AppConfig.QUERY_MODES.CHANNEL_STOPPED}">通路停售</div></div></div>`;break;
       }
       dynamicContentArea.innerHTML=inputHtml+channelSelectionHtml+subOptionHtml;
       const newQueryInput=dynamicContentArea.querySelector('#pct-query-input');
       if(newQueryInput){
         newQueryInput.value=currentQueryInput;
-        newQueryInput.addEventListener('input',e=>{
-          currentQueryInput=e.target.value;hideError('pct-query-err');
-          clearTimeout(debounceTimer);
-          debounceTimer=setTimeout(()=>{if(currentPrimaryMode===AppConfig.QUERY_MODES.PLAN_CODE&&currentQueryInput.trim()){queryMode=currentPrimaryMode;queryInput=currentQueryInput;doQuery();}},500);
-        });
+        newQueryInput.focus();
+        newQueryInput.addEventListener('input',e=>{ currentQueryInput=e.target.value;hideError('pct-query-err'); });
       }
       dynamicContentArea.querySelectorAll('.pct-sub-option').forEach(option=>{
         if(currentSubOptions.includes(option.dataset.subOption))option.classList.add('selected');
-        option.onclick=()=>{option.classList.toggle('selected');const optionValue=option.dataset.subOption,index=currentSubOptions.indexOf(optionValue);if(option.classList.contains('selected')){if(index===-1)currentSubOptions.push(optionValue);}else{if(index>-1)currentSubOptions.splice(index,1);}hideError('pct-query-err');};
+        option.onclick=()=>{
+            // 單選邏輯
+            const parent = option.parentElement;
+            parent.querySelectorAll('.pct-sub-option').forEach(opt => opt.classList.remove('selected'));
+            option.classList.add('selected');
+            currentSubOptions = [option.dataset.subOption];
+            hideError('pct-query-err');
+        };
       });
       dynamicContentArea.querySelectorAll('.pct-channel-option').forEach(option=>{
         if(currentChannels.includes(option.dataset.channel))option.classList.add('selected');
-        option.onclick=()=>{option.classList.toggle('selected');const channelValue=option.dataset.channel,index=currentChannels.indexOf(channelValue);if(option.classList.contains('selected')){if(index===-1)currentChannels.push(channelValue);}else{if(index>-1)currentChannels.splice(index,1);}hideError('pct-query-err');};
+        option.onclick=()=>{
+            option.classList.toggle('selected');
+            const channelValue=option.dataset.channel;
+            const index=currentChannels.indexOf(channelValue);
+            if(option.classList.contains('selected')){ if(index===-1)currentChannels.push(channelValue); }
+            else{ if(index>-1)currentChannels.splice(index,1); }
+            hideError('pct-query-err');
+        };
       });
     };
+    
     const updateModeCardUI=()=>{modeCards.forEach(card=>{card.classList.toggle('selected',card.dataset.mode===currentPrimaryMode);});};
-    updateModeCardUI();updateDynamicContent();
-    modeCards.forEach(card=>{card.onclick=()=>{currentPrimaryMode=card.dataset.mode;updateModeCardUI();currentQueryInput='';currentSubOptions=[];currentChannels=[];updateDynamicContent();};});
-    clearSelectionBtn.onclick=()=>{currentPrimaryMode='';currentQueryInput='';currentSubOptions=[];currentChannels=[];updateModeCardUI();dynamicContentArea.innerHTML='';showToast('已清除所有查詢條件','info');};
-    queryOkBtn.onclick=()=>{
-      let finalMode=currentPrimaryMode,finalInput=currentQueryInput,finalSubOptions=currentSubOptions,finalChannels=currentChannels;
-      if(currentPrimaryMode==='masterDataCategory'){if(currentSubOptions.length===0||currentSubOptions.length>1){showError('請選擇主檔查詢範圍 (現售/停售)','pct-query-err');return;}finalMode=currentSubOptions[0];}
-      else if(currentPrimaryMode==='channelDataCategory'){if(currentSubOptions.length===0||currentSubOptions.length>1){showError('請選擇通路銷售範圍 (現售/停售)','pct-query-err');return;}finalMode=currentSubOptions[0];}
-      else if(!currentPrimaryMode){showError('請選擇查詢模式','pct-query-err');return;}
-      if([AppConfig.QUERY_MODES.PLAN_CODE,AppConfig.QUERY_MODES.PLAN_NAME].includes(finalMode)&&!finalInput){showError('請輸入查詢內容','pct-query-err');return;}
-      queryMode=finalMode;queryInput=finalInput;querySubOption=finalSubOptions;queryChannels=finalChannels;pageNo=1;filterSpecial=false;detailQueryCount=0;
-      doQuery();
+    
+    const handleOk = () => {
+        let finalMode=currentPrimaryMode,finalInput=currentQueryInput,finalSubOptions=currentSubOptions,finalChannels=currentChannels;
+        if(currentPrimaryMode==='masterDataCategory'){if(currentSubOptions.length===0){showError('請選擇主檔查詢範圍 (現售/停售)','pct-query-err');return;}finalMode=currentSubOptions[0];}
+        else if(currentPrimaryMode==='channelDataCategory'){if(currentSubOptions.length===0){showError('請選擇通路銷售範圍 (現售/停售)','pct-query-err');return;}finalMode=currentSubOptions[0];}
+        else if(!currentPrimaryMode){showError('請選擇查詢模式','pct-query-err');return;}
+        
+        if([AppConfig.QUERY_MODES.PLAN_CODE,AppConfig.QUERY_MODES.PLAN_NAME].includes(finalMode)&&!finalInput.trim()){showError('請輸入查詢內容','pct-query-err');return;}
+        
+        queryMode=finalMode;queryInput=finalInput;querySubOption=finalSubOptions;queryChannels=finalChannels;
+        pageNo=1;filterSpecial=false;detailQueryCount=0;
+        doQuery();
     };
+
+    modeCards.forEach(card=>{card.onclick=()=>{currentPrimaryMode=card.dataset.mode;updateModeCardUI();currentQueryInput='';currentSubOptions=[];currentChannels=[];updateDynamicContent();};});
+    clearSelectionBtn.onclick=()=>{currentPrimaryMode='';currentQueryInput='';currentSubOptions=[];currentChannels=[];updateModeCardUI();dynamicContentArea.innerHTML='';queryMode='';showToast('已清除所有查詢條件','info');};
+    queryOkBtn.onclick = handleOk;
     queryCancelBtn.onclick=()=>closeModal();
+
     if(queryMode){
-      const modeToSelect=primaryQueryModes.find(pm=>{if(pm===queryMode)return true;if(pm==='masterDataCategory'&&[AppConfig.QUERY_MODES.MASTER_IN_SALE,AppConfig.QUERY_MODES.MASTER_STOPPED].includes(queryMode))return true;if(pm==='channelDataCategory'&&[AppConfig.QUERY_MODES.CHANNEL_IN_SALE,AppConfig.QUERY_MODES.CHANNEL_STOPPED].includes(queryMode))return true;return false;});
-      if(modeToSelect){currentPrimaryMode=modeToSelect;updateModeCardUI();updateDynamicContent();if(modeToSelect==='masterDataCategory'||modeToSelect==='channelDataCategory'){const subOptionElement=dynamicContentArea.querySelector(`[data-sub-option="${queryMode}"]`);if(subOptionElement)subOptionElement.classList.add('selected');}if(modeToSelect==='channelDataCategory'&&queryChannels.length>0){queryChannels.forEach(ch=>{const channelElement=dynamicContentArea.querySelector(`[data-channel="${ch}"]`);if(channelElement)channelElement.classList.add('selected');});}}
+      const modeToSelect=primaryQueryModes.find(pm=>{
+          if(pm===queryMode)return true;
+          if(pm==='masterDataCategory'&&[AppConfig.QUERY_MODES.MASTER_IN_SALE,AppConfig.QUERY_MODES.MASTER_STOPPED].includes(queryMode))return true;
+          if(pm==='channelDataCategory'&&[AppConfig.QUERY_MODES.CHANNEL_IN_SALE,AppConfig.QUERY_MODES.CHANNEL_STOPPED].includes(queryMode))return true;
+          return false;
+      });
+      if(modeToSelect){
+          currentPrimaryMode=modeToSelect;
+          if([AppConfig.QUERY_MODES.MASTER_IN_SALE,AppConfig.QUERY_MODES.MASTER_STOPPED,AppConfig.QUERY_MODES.CHANNEL_IN_SALE,AppConfig.QUERY_MODES.CHANNEL_STOPPED].includes(queryMode)){
+              currentSubOptions = [queryMode];
+          }
+          updateModeCardUI();
+          updateDynamicContent();
+      }
     }
   });
 }
 
 function modeLabel(mode){
-  switch(mode){
-    case AppConfig.QUERY_MODES.PLAN_CODE: return'商品代號';
-    case AppConfig.QUERY_MODES.PLAN_NAME: return'商品名稱關鍵字';
-    case AppConfig.QUERY_MODES.ALL_MASTER_PLANS: return'查詢全部主檔';
-    case 'masterDataCategory': return'主檔資料';
-    case 'channelDataCategory': return'通路資料';
-    case AppConfig.QUERY_MODES.MASTER_IN_SALE: return'主檔現售';
-    case AppConfig.QUERY_MODES.MASTER_STOPPED: return'主檔停售';
-    case AppConfig.QUERY_MODES.CHANNEL_IN_SALE: return'通路現售';
-    case AppConfig.QUERY_MODES.CHANNEL_STOPPED: return'通路停售';
-    default: return mode;
-  }
+  const labels = {
+    [AppConfig.QUERY_MODES.PLAN_CODE]: '商品代號',
+    [AppConfig.QUERY_MODES.PLAN_NAME]: '商品名稱',
+    [AppConfig.QUERY_MODES.ALL_MASTER_PLANS]: '查詢全部主檔',
+    'masterDataCategory': '依主檔狀態',
+    'channelDataCategory': '依通路狀態',
+    [AppConfig.QUERY_MODES.MASTER_IN_SALE]: '主檔現售',
+    [AppConfig.QUERY_MODES.MASTER_STOPPED]: '主檔停售',
+    [AppConfig.QUERY_MODES.CHANNEL_IN_SALE]: '通路現售',
+    [AppConfig.QUERY_MODES.CHANNEL_STOPPED]: '通路停售',
+  };
+  return labels[mode] || mode;
 }
 
 /**
@@ -654,12 +734,13 @@ function modeLabel(mode){
  */
 async function doQuery(){
   closeModal();
-  showToast('查詢中...','info');resetData();allProcessedData=[];totalRecords=0;
+  showToast('查詢中，請稍候...','info', 60000); // 延長提示時間
+  resetData();allProcessedData=[];totalRecords=0;
   let rawRecords=[],currentTotalRecords=0;
   const pageSizeMaster=AppConfig.DEFAULT_QUERY_PARAMS.PAGE_SIZE_MASTER;
   try{
     if([AppConfig.QUERY_MODES.PLAN_CODE,AppConfig.QUERY_MODES.PLAN_NAME,AppConfig.QUERY_MODES.ALL_MASTER_PLANS,AppConfig.QUERY_MODES.MASTER_IN_SALE].includes(queryMode)){
-      if(queryMode===AppConfig.QUERY_MODES.PLAN_CODE&&queryInput.includes(',')){
+      if(queryMode===AppConfig.QUERY_MODES.PLAN_CODE&&Utils.splitInput(queryInput).length > 1){
         const planCodes=Utils.splitInput(queryInput);
         showToast(`查詢 ${planCodes.length} 個商品代號中...`,'info',3000);
         const multiQueryResult=await queryMultiplePlanCodes(planCodes);
@@ -672,37 +753,37 @@ async function doQuery(){
     }else if(queryMode===AppConfig.QUERY_MODES.MASTER_STOPPED){
       const params=buildMasterQueryParams(AppConfig.QUERY_MODES.ALL_MASTER_PLANS,'',1,pageSizeMaster);
       const result=await callApi(`${apiBase}/planCodeController/query`,params);
-      rawRecords=(result.records||[]).filter(item=>Utils.getSaleStatus(Utils.formatToday(),item.saleStartDate,item.saleEndDate)===AppConfig.SALE_STATUS.STOPPED);
+      const todayStr = Utils.formatToday();
+      rawRecords=(result.records||[]).filter(item=>Utils.getSaleStatus(todayStr,item.saleStartDate,item.saleEndDate)===AppConfig.SALE_STATUS.STOPPED);
       currentTotalRecords=rawRecords.length;
     }else if([AppConfig.QUERY_MODES.CHANNEL_IN_SALE,AppConfig.QUERY_MODES.CHANNEL_STOPPED].includes(queryMode)){
       const channelsToQuery=queryChannels.length>0?queryChannels:AppConfig.FIELD_MAPS.CHANNELS;
-      let allChannelRecords=[];
-      for(const channel of channelsToQuery){
-        const baseParams={"channel":channel,"saleEndDate":(queryMode===AppConfig.QUERY_MODES.CHANNEL_IN_SALE)?"9999-12-31 00:00:00":"","pageIndex":1,"size":AppConfig.DEFAULT_QUERY_PARAMS.PAGE_SIZE_CHANNEL,"orderBys":["planCode asc"]};
-        const result=await callApi(`${apiBase}/planCodeSaleDateController/query`,baseParams);
-        let channelRecords=result.planCodeSaleDates?.records||[];
-        if(queryMode===AppConfig.QUERY_MODES.CHANNEL_STOPPED){channelRecords=channelRecords.filter(item=>Utils.getSaleStatus(Utils.formatToday(),item.saleStartDate,item.saleEndDate)===AppConfig.SALE_STATUS.STOPPED);}
-        channelRecords.forEach(r=>r._sourceChannel=channel);allChannelRecords.push(...channelRecords);
-      }
-      const uniqueChannelRecords=[],seenChannelEntries=new Set();
-      for(const record of allChannelRecords){
-        const identifier=record.planCode+(record._sourceChannel||'');
-        if(!seenChannelEntries.has(identifier)){seenChannelEntries.add(identifier);uniqueChannelRecords.push(record);}
-      }
-      rawRecords=uniqueChannelRecords;currentTotalRecords=uniqueChannelRecords.length;
+      showToast(`查詢通路 [${channelsToQuery.join(',')}] 資料中...`, 'info', 60000);
+      const todayStr = Utils.formatToday();
+      const params = {
+        channelList: channelsToQuery,
+        saleStatus: queryMode === AppConfig.QUERY_MODES.CHANNEL_IN_SALE ? '1' : '2', // 1:現售, 2:停售
+        pageIndex: 1,
+        size: AppConfig.DEFAULT_QUERY_PARAMS.PAGE_SIZE_CHANNEL,
+        orderBys:["plan_code asc"]
+      };
+      const result = await callApi(`${apiBase}/planCodeSaleDateController/queryBySaleStatus`, params);
+      rawRecords = result.planCodeSaleDates?.records || [];
+      currentTotalRecords = result.planCodeSaleDates?.totalRecords || 0;
     }else{throw new Error('未知的查詢模式或條件不完整');}
+    
     totalRecords=currentTotalRecords;
     allProcessedData=await processAllDataForTable(rawRecords,apiBase,false);
     if(sortKey){allProcessedData=sortData(allProcessedData,sortKey,sortAsc);}
     renderTable();
     showToast(`查詢完成，共 ${allProcessedData.length} 筆資料`,'success');
-  }catch(e){showToast(`查詢 API 失敗：${e.message}`,'error');allProcessedData=[];totalRecords=0;renderTable();}
+  }catch(e){showToast(`查詢 API 失敗：${e.message}`,'error', 5000);allProcessedData=[];totalRecords=0;renderTable();}
 }
 
 function buildMasterQueryParams(mode,input,pageNo,pageSize){
   const params={currentPage:pageNo,pageSize};
   switch(mode){
-    case AppConfig.QUERY_MODES.PLAN_CODE:params.planCode=input;break;
+    case AppConfig.QUERY_MODES.PLAN_CODE:params.planCode=Utils.splitInput(input)[0];break;
     case AppConfig.QUERY_MODES.PLAN_NAME:params.planCodeName=input;break;
     case AppConfig.QUERY_MODES.ALL_MASTER_PLANS:params.planCodeName='';break;
     case AppConfig.QUERY_MODES.MASTER_IN_SALE:params.saleEndDate='9999-12-31 00:00:00';break;
@@ -716,7 +797,7 @@ async function queryMultiplePlanCodes(planCodes){
   for(let i=0;i<planCodes.length;i++){
     const planCode=planCodes[i];
     try{
-      showToast(`查詢商品代號 ${planCode} (${i+1}/${planCodes.length})...`,'info',1000);
+      showToast(`查詢商品代號 ${planCode} (${i+1}/${planCodes.length})...`,'info',1500);
       const params={planCode,currentPage:1,pageSize:AppConfig.DEFAULT_QUERY_PARAMS.PAGE_SIZE_DETAIL};
       const result=await callApi(`${apiBase}/planCodeController/query`,params);
       if(result.records&&result.records.length>0){result.records.forEach(record=>record._querySourcePlanCode=planCode);allRecords.push(...result.records);}
@@ -732,14 +813,23 @@ async function querySinglePlanCode(planCode){
     const params={planCode,currentPage:1,pageSize:AppConfig.DEFAULT_QUERY_PARAMS.PAGE_SIZE_DETAIL};
     const result=await callApi(`${apiBase}/planCodeController/query`,params);
     if(result.records&&result.records.length>0){
-      const processed=await processAllDataForTable(result.records,apiBase,false);
+      const processed=await processAllDataForTable(result.records,apiBase,true); // Force fetch details for single retry
       const idx=allProcessedData.findIndex(r=>r.planCode===planCode&&r._isErrorRow);
       if(idx>-1){allProcessedData.splice(idx,1,...processed);}
-      else{allProcessedData.push(...processed);}
+      else{
+          // if not found, just add it
+          allProcessedData.push(...processed);
+      }
+      if(sortKey){allProcessedData=sortData(allProcessedData,sortKey,sortAsc);}
       renderTable();
       showToast(`${planCode} 查詢成功`,'success');
     }else{
       showToast(`${planCode} 查無資料`,'warning');
+      const idx=allProcessedData.findIndex(r=>r.planCode===planCode&&r._isErrorRow);
+      if(idx > -1) {
+          allProcessedData[idx].saleEndDate = '查詢狀態: 查無資料';
+          renderTable();
+      }
     }
   }catch(error){
     showToast(`${planCode} 查詢失敗: ${error.message}`,'error');
@@ -748,22 +838,23 @@ async function querySinglePlanCode(planCode){
 
 async function handleDetailQuery(){
   detailQueryCount++;
-繼續完成完整的 JavaScript bookmarklet 語法：
-
-```javascript
-async function handleDetailQuery(){
-  detailQueryCount++;
-  if(detailQueryCount===1){showToast('第一次查詢詳細資料，僅補齊尚未載入的數據...','info',3000);await updateAllDetailsAndRefreshTable(false);}
-  else{
+  if(detailQueryCount===1){
+      showToast('補齊所有詳細資料中，請稍候...','info', 60000);
+      await updateAllDetailsAndRefreshTable(false);
+  } else {
     const confirmReset=confirm('您已點擊過「一鍵查詢全部詳細」。再次點擊將清空所有快取並重新查詢所有數據，這可能需要一些時間。您確定要繼續嗎？');
-    if(confirmReset){showToast('清空快取並重新查詢所有詳細資料中...','info',3000);await updateAllDetailsAndRefreshTable(true);}
-    else{showToast('已取消操作。','info');}
+    if(confirmReset){
+        showToast('清空快取並重新查詢所有詳細資料中...','info',60000);
+        await updateAllDetailsAndRefreshTable(true);
+    } else {
+        showToast('已取消操作。','info');
+    }
   }
 }
 
 async function updateAllDetailsAndRefreshTable(forceFetch=false){
   const rawData=_allRawData;
-  if(rawData.length===0&&!forceFetch){showToast('沒有原始數據可供查詢詳細資訊','warning');return;}
+  if(rawData.length===0){showToast('沒有原始數據可供查詢詳細資訊','warning');return;}
   allProcessedData=await processAllDataForTable(rawData,apiBase,forceFetch);
   if(allProcessedData.length>0){
     if(sortKey){allProcessedData=sortData(allProcessedData,sortKey,sortAsc);}
@@ -772,166 +863,198 @@ async function updateAllDetailsAndRefreshTable(forceFetch=false){
 }
 
 /**
- * ========== 表格渲染 - 保持視窗位置 ==========
+ * ========== 表格渲染 ==========
  * 負責查詢結果的表格顯示、分頁、排序、篩選等功能
  */
 function renderTable(){
-  let displayedData = filterSpecial ? allProcessedData.filter(r=>r.special) : allProcessedData;
+  let displayedData = allProcessedData;
+
+  if (filterSpecial) {
+      displayedData = displayedData.filter(r => r.special);
+  }
   
   // 套用搜尋篩選
   if(searchKeyword.trim()){
     const keyword = searchKeyword.toLowerCase();
     displayedData = displayedData.filter(row => {
-      return Object.values(row).some(value => 
-        String(value).toLowerCase().includes(keyword)
-      );
+        // 排除 _originalItem，避免過度匹配
+        const rowWithoutOriginal = {...row};
+        delete rowWithoutOriginal._originalItem;
+        const channelStr = (row.channels||[]).map(c => `${c.channel} ${c.status}`).join(' ');
+        const searchableString = Object.values(rowWithoutOriginal).join(' ') + ' ' + channelStr;
+        return searchableString.toLowerCase().includes(keyword);
     });
   }
   
-  const totalPages=Math.ceil(displayedData.length/pageSize);
+  const totalFilteredRecords = displayedData.length;
+  const totalPages=Math.ceil(totalFilteredRecords/pageSize);
+  if (pageNo > totalPages && totalPages > 0) pageNo = totalPages;
+
   const startIndex=(pageNo-1)*pageSize;
   const endIndex=startIndex+pageSize;
   const pageData=displayedData.slice(startIndex,endIndex);
-  const hasPrev=pageNo>1;
-  const hasNext=pageNor.special);
   
-  // 檢查是否已有視窗存在
-  const existingModal=document.getElementById('planCodeQueryToolInstance');
+  const existingModal=document.getElementById(AppConfig.TOOL_ID);
   
-  if(existingModal){
+  if(existingModal && existingModal.querySelector('.pct-table-wrap')){
     // 視窗已存在，只更新內容
-    updateTableContent(existingModal, displayedData, pageData, totalPages, hasPrev, hasNext, hasSpecialData);
+    updateTableContent(existingModal, displayedData, pageData, totalPages);
   }else{
-    // 第一次建立視窗
-    createNewTableModal(displayedData, pageData, totalPages, hasPrev, hasNext, hasSpecialData);
+    // 第一次建立視窗或從查詢頁面過來
+    createNewTableModal(displayedData, pageData, totalPages);
   }
 }
 
-/**
- * 更新現有表格內容（不重新建立視窗）
- */
-function updateTableContent(modal, displayedData, pageData, totalPages, hasPrev, hasNext, hasSpecialData){
-  // 更新表格內容
-  const bodyElement=modal.querySelector('.pct-modal-body');
-  bodyElement.innerHTML=`
-    ${renderSummary(displayedData,hasSpecialData)}
-    ${renderSearchBox()}
-    ${renderTableHTML(pageData)}
-  `;
-  
-  // 更新分頁按鈕狀態
-  const prevBtn=modal.querySelector('#pct-table-prev');
-  const nextBtn=modal.querySelector('#pct-table-next');
-  const pageInfo=modal.querySelector('.pct-pagination-info');
-  
-  if(prevBtn){
-    prevBtn.disabled=!hasPrev;
-    prevBtn.onclick=()=>{if(pageNo>1){pageNo--;renderTable();}};
-  }
-  
-  if(nextBtn){
-    nextBtn.disabled=!hasNext;
-    nextBtn.onclick=()=>{if(pageNo查詢結果（${env==='PROD'?'正式環境':'測試環境'}）
-    
-      ${renderSummary(displayedData,hasSpecialData)}
+function updateTableContent(modal, displayedData, pageData, totalPages){
+  const bodyElement = modal.querySelector('.pct-modal-body');
+  if (bodyElement) {
+    bodyElement.innerHTML = `
+      ${renderSummary(displayedData)}
       ${renderSearchBox()}
       ${renderTableHTML(pageData)}
-    
-    
-      上一頁
-      下一頁
-      第 ${pageNo} 頁 / 共 ${totalPages} 頁 (總計 ${displayedData.length} 筆)
-      
-      一鍵查詢全部詳細
-      一鍵複製
-      ${hasSpecialData?`${filterSpecial?'顯示全部':'篩選特殊狀態'}`:''}重新查詢
-      關閉
-    
-  `, modal=>{
+    `;
+  }
+  
+  const footerElement = modal.querySelector('.pct-modal-footer');
+  if (footerElement) {
+    const hasSpecialData = allProcessedData.some(r => r.special);
+    footerElement.innerHTML = `
+        ${renderPagination(displayedData.length, totalPages)}
+        <button class="pct-btn pct-btn-info" id="pct-table-detail-query">一鍵查詢全部詳細</button>
+        <button class="pct-btn pct-btn-success" id="pct-table-copy">一鍵複製</button>
+        ${hasSpecialData ? `<button class="pct-btn pct-filter-btn ${filterSpecial ? 'pct-filter-btn-active' : ''}" id="pct-table-filter">${filterSpecial?'顯示全部':'篩選特殊狀態'}</button>`:''}
+        <button class="pct-btn pct-btn-secondary" id="pct-table-requery">重新查詢</button>
+        <button class="pct-btn pct-btn-secondary" id="pct-table-close">關閉</button>
+    `;
+  }
+  
+  bindTableEvents(modal, displayedData, totalPages);
+}
+
+function createNewTableModal(displayedData, pageData, totalPages){
+  const hasSpecialData = allProcessedData.some(r => r.special);
+  const modalHTML = `
+    <div class="pct-modal-header"><span id="pct-modal-title">查詢結果 (${env==='PROD'?'正式環境':'測試環境'})</span></div>
+    <div class="pct-modal-body">
+      ${renderSummary(displayedData)}
+      ${renderSearchBox()}
+      ${renderTableHTML(pageData)}
+    </div>
+    <div class="pct-modal-footer">
+        ${renderPagination(displayedData.length, totalPages)}
+        <button class="pct-btn pct-btn-info" id="pct-table-detail-query">一鍵查詢全部詳細</button>
+        <button class="pct-btn pct-btn-success" id="pct-table-copy">一鍵複製</button>
+        ${hasSpecialData ? `<button class="pct-btn pct-filter-btn ${filterSpecial ? 'pct-filter-btn-active' : ''}" id="pct-table-filter">${filterSpecial?'顯示全部':'篩選特殊狀態'}</button>`:''}
+        <button class="pct-btn pct-btn-secondary" id="pct-table-requery">重新查詢</button>
+        <button class="pct-btn pct-btn-secondary" id="pct-table-close">關閉</button>
+    </div>
+  `;
+  showModal(modalHTML, modal => {
     bindTableEvents(modal, displayedData, totalPages);
   });
 }
 
-/**
- * 渲染搜尋框
- */
 function renderSearchBox(){
   return `
-    
-      
-      ${searchKeyword ? 
-        '✕' : 
-        '🔍'
-      }
-    
+    <div class="pct-search-container">
+      <input type="text" class="pct-search-input" id="pct-search-input" value="${Utils.escapeHtml(searchKeyword)}" placeholder="在結果中搜尋...">
+      <span class="pct-search-icon">🔍</span>
+      <button class="pct-search-clear" id="pct-search-clear" title="清除搜尋">×</button>
+    </div>
   `;
 }
 
-function renderSummary(data,hasSpecialData){
+function renderSummary(data){
   const specialCount=data.filter(r=>r.special).length;
-  let html=`共 ${data.length} 筆`;
-  if(hasSpecialData){html+=`，其中特殊狀態: ${specialCount} 筆`;}
-  html+=``;return html;
-}
-
-/**
- * 修正表格 HTML 渲染 - 加入排序箭頭
- */
-function renderTableHTML(data){
-  if(!data||data.length===0){
-    return`查無資料`;
-  }
-  
-  // 表格標題定義
-  const headers = [
-    {key: 'no', label: 'No'},
-    {key: 'planCode', label: '代號'},
-    {key: 'shortName', label: '商品名稱'},
-    {key: 'currency', label: '幣別'},
-    {key: 'unit', label: '單位'},
-    {key: 'coverageType', label: '類型'},
-    {key: 'saleStartDate', label: '銷售起日'},
-    {key: 'saleEndDate', label: '銷售迄日'},
-    {key: 'mainStatus', label: '主約狀態'},
-    {key: 'polpln', label: 'POLPLN'},
-    {key: '', label: '通路資訊'}
-  ];
-  
-  let html=``;
-  
-  // 渲染表格標題與排序箭頭
-  headers.forEach(header => {
-    if(header.key){
-      const sortClass = sortKey === header.key ? (sortAsc ? 'sort-asc' : 'sort-desc') : '';
-      html += `${header.label}`;
-    } else {
-      html += `${header.label}`;
-    }
-  });
-  
-  html += ``;
-  
-  // 渲染表格內容
-  data.forEach(row=>{
-    if(row._isErrorRow){
-      html+=`${row.no}${Utils.escapeHtml(row.planCode)}${row.saleEndDate}重新查詢`;
-      return;
-    }
-    const channelHtml=(row.channels||[]).map(c=>{
-      const statusClass=c.status===AppConfig.SALE_STATUS.CURRENT?'pct-status-onsale':(c.status===AppConfig.SALE_STATUS.STOPPED?'pct-status-offsale':(c.status===AppConfig.SALE_STATUS.ABNORMAL?'pct-status-abnormal':'pct-status-pending'));
-      return`${Utils.escapeHtml(c.channel)}:${Utils.escapeHtml(c.saleEndDate)}（${Utils.escapeHtml(c.status)}）`;
-    }).join('');
-    html+=`${row.no}${Utils.escapeHtml(row.planCode)}${Utils.escapeHtml(row.shortName)}${Utils.escapeHtml(row.currency)}${Utils.escapeHtml(row.unit)}${Utils.escapeHtml(row.coverageType)}${Utils.escapeHtml(row.saleStartDate)}${Utils.escapeHtml(row.saleEndDate)}${Utils.escapeHtml(row.mainStatus)}${Utils.escapeHtml(row.polpln||'')}${channelHtml}`;
-  });
-  html+=``;
+  let html=`<div class="pct-summary">顯示 <b>${data.length}</b> / ${allProcessedData.length} 筆資料`;
+  if(allProcessedData.some(r=>r.special)){html+=` (特殊狀態: <b>${specialCount}</b> 筆)`;}
+  html+=`</div>`;
   return html;
 }
 
-/**
- * 綁定表格相關事件 - 加入搜尋防抖
- */
+function renderPagination(filteredCount, totalPages) {
+    if (totalPages <= 1) return '<div class="pct-pagination-info"></div>'; // 如果只有一頁或沒有，不顯示分頁
+    return `
+      <div class="pct-pagination">
+          <div class="pct-pagination-info">第 ${pageNo} 頁 / 共 ${totalPages} 頁 (共 ${filteredCount} 筆)</div>
+          <button class="pct-btn" id="pct-table-prev" ${pageNo === 1 ? 'disabled' : ''}>&lt; 上一頁</button>
+          <button class="pct-btn" id="pct-table-next" ${pageNo === totalPages ? 'disabled' : ''}>下一頁 &gt;</button>
+      </div>
+    `;
+}
+
+function renderTableHTML(data){
+  if(!data||data.length===0){
+    return`<div class="pct-no-data-msg">查無資料</div>`;
+  }
+  
+  const headers = [
+    {key: 'no', label: 'No.'}, {key: 'planCode', label: '代號'},
+    {key: 'shortName', label: '商品名稱'}, {key: 'currency', label: '幣別'},
+    {key: 'unit', label: '單位'}, {key: 'coverageType', label: '類型'},
+    {key: 'saleStartDate', label: '銷售起日'}, {key: 'saleEndDate', label: '銷售迄日'},
+    {key: 'mainStatus', label: '主約狀態'}, {key: 'polpln', label: 'POLPLN'},
+    {key: null, label: '通路資訊'}
+  ];
+  
+  let headerHtml = headers.map(header => {
+    if(header.key){
+      const sortClass = sortKey === header.key ? (sortAsc ? 'sort-asc' : 'sort-desc') : '';
+      return `<th data-key="${header.key}" class="${sortClass}">${header.label}</th>`;
+    } else {
+      return `<th>${header.label}</th>`;
+    }
+  }).join('');
+
+  let bodyHtml = data.map(row => {
+    if(row._isErrorRow){
+      return `<tr class="special-row">
+        <td>${row.no}</td>
+        <td>${Utils.escapeHtml(row.planCode)}</td>
+        <td colspan="8">${row.saleEndDate}</td>
+        <td><button class="pct-btn pct-btn-retry" data-plan="${Utils.escapeHtml(row.planCode)}">重新查詢</button></td>
+      </tr>`;
+    }
+    
+    const statusClassMap = {
+        [AppConfig.SALE_STATUS.CURRENT]: 'pct-status-onsale',
+        [AppConfig.SALE_STATUS.STOPPED]: 'pct-status-offsale',
+        [AppConfig.SALE_STATUS.ABNORMAL]: 'pct-status-abnormal',
+        [AppConfig.SALE_STATUS.PENDING]: 'pct-status-pending'
+    };
+    const mainStatusClass = statusClassMap[row.mainStatus] || '';
+    
+    const channelHtml=(row.channels||[]).map(c=>{
+      const channelStatusClass = statusClassMap[c.status] || '';
+      return `<div><strong class="pct-td-copy" data-raw="${Utils.escapeHtml(c.channel)}">${Utils.escapeHtml(c.channel)}</strong>: ${Utils.escapeHtml(c.saleStartDate)}~${Utils.escapeHtml(c.saleEndDate)} <span class="${channelStatusClass}">(${Utils.escapeHtml(c.status)})</span></div>`;
+    }).join('');
+
+    return `
+      <tr class="${row.special?'special-row':''}">
+        <td>${row.no}</td>
+        <td class="pct-td-copy" data-raw="${Utils.escapeHtml(row.planCode)}">${Utils.escapeHtml(row.planCode)}</td>
+        <td class="pct-td-copy" data-raw="${Utils.escapeHtml(row.shortName)}">${Utils.escapeHtml(row.shortName)}</td>
+        <td>${Utils.escapeHtml(row.currency)}</td>
+        <td>${Utils.escapeHtml(row.unit)}</td>
+        <td>${Utils.escapeHtml(row.coverageType)}</td>
+        <td>${Utils.escapeHtml(row.saleStartDate)}</td>
+        <td>${Utils.escapeHtml(row.saleEndDate)}</td>
+        <td class="${mainStatusClass}">${Utils.escapeHtml(row.mainStatus)}</td>
+        <td class="pct-td-copy" data-raw="${Utils.escapeHtml(row.polpln||'')}">${Utils.escapeHtml(row.polpln||'')}</td>
+        <td>${channelHtml}</td>
+      </tr>`;
+  }).join('');
+
+  return `
+    <div class="pct-table-wrap">
+      <table class="pct-table">
+        <thead><tr>${headerHtml}</tr></thead>
+        <tbody>${bodyHtml}</tbody>
+      </table>
+    </div>`;
+}
+
 function bindTableEvents(modal, displayedData, totalPages){
-  // 搜尋框事件 - 防抖處理
   const searchInput = modal.querySelector('#pct-search-input');
   const searchClear = modal.querySelector('#pct-search-clear');
   
@@ -940,46 +1063,39 @@ function bindTableEvents(modal, displayedData, totalPages){
       clearTimeout(searchDebounceTimer);
       searchDebounceTimer = setTimeout(() => {
         searchKeyword = e.target.value;
-        pageNo = 1;  // 搜尋時回到第一頁
+        pageNo = 1;
         renderTable();
-      }, 300);  // 300ms 防抖
+      }, 300);
     });
   }
   
   if(searchClear){
     searchClear.addEventListener('click', () => {
       searchKeyword = '';
+      if (searchInput) searchInput.value = '';
       pageNo = 1;
       renderTable();
     });
   }
   
-  // 分頁按鈕
   const prevBtn=modal.querySelector('#pct-table-prev');
   const nextBtn=modal.querySelector('#pct-table-next');
-  
   if(prevBtn) prevBtn.onclick=()=>{if(pageNo>1){pageNo--;renderTable();}};
-  if(nextBtn) nextBtn.onclick=()=>{if(pageNo{handleDetailQuery();};
+  if(nextBtn) nextBtn.onclick=()=>{if(pageNo<totalPages){pageNo++;renderTable();}};
+  
+  modal.querySelector('#pct-table-detail-query').onclick=()=>{handleDetailQuery();};
   modal.querySelector('#pct-table-copy').onclick=()=>{Utils.copyTextToClipboard(renderTableText(displayedData),showToast);};
   modal.querySelector('#pct-table-requery').onclick=()=>{showQueryDialog();};
   modal.querySelector('#pct-table-close').onclick=()=>{closeModal();};
   
-  // 篩選按鈕
   const filterBtn=modal.querySelector('#pct-table-filter');
   if(filterBtn){filterBtn.onclick=()=>{filterSpecial=!filterSpecial;pageNo=1;renderTable();};}
   
-  // 表格排序 - 更新排序狀態
   modal.querySelectorAll('.pct-table th[data-key]').forEach(th=>{
     th.onclick=()=>{
       const key=th.dataset.key;
       if(!key)return;
       
-      // 移除其他標題的排序樣式
-      modal.querySelectorAll('.pct-table th[data-key]').forEach(header => {
-        header.classList.remove('sort-asc', 'sort-desc');
-      });
-      
-      // 設定新的排序
       if(sortKey===key){
         sortAsc=!sortAsc;
       } else {
@@ -987,16 +1103,12 @@ function bindTableEvents(modal, displayedData, totalPages){
         sortAsc=true;
       }
       
-      // 加入排序樣式
-      th.classList.add(sortAsc ? 'sort-asc' : 'sort-desc');
-      
       allProcessedData=sortData(allProcessedData,sortKey,sortAsc);
       pageNo=1;
       renderTable();
     };
   });
   
-  // 重新查詢按鈕
   modal.querySelectorAll('.pct-btn-retry').forEach(btn=>{
     btn.onclick=async()=>{
       const planCode=btn.getAttribute('data-plan');
@@ -1004,17 +1116,21 @@ function bindTableEvents(modal, displayedData, totalPages){
     }
   });
   
-  // 複製功能
   modal.querySelectorAll('.pct-td-copy').forEach(td=>{
-    td.onclick=()=>{Utils.copyTextToClipboard(td.getAttribute('data-raw'),showToast);}
+    td.onclick=()=>{ 
+        const textToCopy = td.getAttribute('data-raw');
+        if (textToCopy) {
+            Utils.copyTextToClipboard(textToCopy, msg => showToast(msg, 'success', 1200));
+        }
+    }
   });
 }
 
 function renderTableText(data){
-  let txt=`No\t代號\t商品名稱\t幣別\t單位\t類型\t銷售起日\t銷售迄日\t主約狀態\tPOLPLN\t通路資訊\n`;
+  let txt=`No.\t代號\t商品名稱\t幣別\t單位\t類型\t銷售起日\t銷售迄日\t主約狀態\tPOLPLN\t通路資訊\n`;
   data.forEach(row=>{
-    let channelStr=(row.channels||[]).map(c=>`${c.channel}:${c.saleEndDate}（${c.status}）`).join(' / ');
-    txt+=`${row.no}\t${row.planCode}\t${row.shortName}\t${row.currency}\t${row.unit}\t${row.coverageType}\t${row.saleStartDate}\t${row.saleEndDate}\t${row.mainStatus}\t${row.polpln}\t${channelStr}\n`;
+    let channelStr=(row.channels||[]).map(c=>`${c.channel}:${c.saleStartDate}~${c.saleEndDate}(${c.status})`).join(' / ');
+    txt+=`${row.no}\t${row.planCode}\t${row.shortName}\t${row.currency}\t${row.unit}\t${row.coverageType}\t${row.saleStartDate}\t${row.saleEndDate}\t${row.mainStatus}\t"${row.polpln||''}"\t"${channelStr}"\n`;
   });
   return txt;
 }
@@ -1026,13 +1142,13 @@ function renderTableText(data){
 if(!token){
   showTokenDialog();
 }else{
-  showToast('正在驗證 Token，請稍候...','info');
+  showToast('正在驗證既有 Token...','info');
   verifyToken(token,apiBase).then(isValid=>{
     if(isValid){
-      showToast('Token 驗證成功，已自動登入','success');
+      showToast('Token 驗證成功','success');
       showQueryDialog();
     }else{
-      showToast('Token 無效，請重新設定','warning');
+      showToast('既有 Token 無效或已過期，請重新設定','warning', 3000);
       localStorage.removeItem('SSO-TOKEN');
       localStorage.removeItem('euisToken');
       token='';
@@ -1046,30 +1162,3 @@ if(!token){
 }
 
 })();
-```
-
-## **完整功能特色**
-
-### **✅ 核心功能**
-- **多種查詢模式**：商品代號、名稱、主檔資料、通路資料
-- **TOKEN 管理**：支援 SSO-TOKEN 和 euisToken，強制檢核+略過選項
-- **環境自動偵測**：UAT/PROD 環境自動切換
-
-### **✅ 表格功能**
-- **排序指示箭頭**：點擊標題排序，顯示 ↑↓ 箭頭
-- **搜尋防抖**：300ms 防抖，全欄位搜尋
-- **分頁保持視窗**：分頁時不關閉重開，視窗位置固定
-- **特殊狀態篩選**：標示並篩選異常狀態商品
-
-### **✅ UI/UX 優化**
-- **字體顏色加深**：提升可讀性
-- **拖曳功能**：可拖曳移動視窗
-- **響應式設計**：支援手機版面
-- **一鍵複製**：支援表格資料複製
-
-### **✅ 效能優化**
-- **快取機制**：POLPLN 和通路資料快取
-- **批量查詢**：支援多商品代號同時查詢
-- **錯誤處理**：完整的錯誤提示與重試機制
-
-**這是完整可執行的 bookmarklet 工具，包含所有你要求的功能！**
