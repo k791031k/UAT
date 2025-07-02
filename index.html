@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube 影片下載與預覽工具</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+    }
+    .container {
+      width: 90%;
+      max-width: 600px;
+      margin: 50px auto;
+      background-color: #fff;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    button {
+      padding: 12px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .video-player {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .download-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .download-link a {
+      color: #007bff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .download-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>YouTube 影片下載與預覽工具</h1>
+
+    <label for="youtubeUrl">請輸入 YouTube 影片網址：</label>
+    <input type="text" id="youtubeUrl" placeholder="例如：https://www.youtube.com/watch?v=XXXXX" />
+
+    <button onclick="generateDownloadLink()">生成下載鏈接與預覽</button>
+
+    <!-- 預覽播放器區域 -->
+    <div class="video-player" id="videoPlayerArea"></div>
+
+    <!-- 下載鏈接顯示區域 -->
+    <div class="download-link" id="downloadLinkArea"></div>
+  </div>
+
+  <script>
+    function generateDownloadLink() {
+      const url = document.getElementById('youtubeUrl').value;
+      const videoPlayerArea = document.getElementById('videoPlayerArea');
+      const downloadLinkArea = document.getElementById('downloadLinkArea');
+      
+      // 檢查 URL 是否有效
+      const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|(?:.*[?&]v=))([^""&?\/]+)/);
+      
+      if (match && match[1]) {
+        const videoId = match[1];
+        
+        // 根據 YouTube 影片 ID 生成下載鏈接
+        const downloadUrl = `https://yt1s.com/en13/${videoId}`;
+        
+        // 預覽影片：顯示 <video> 播放器
+        videoPlayerArea.innerHTML = `
+          <h3>影片預覽：</h3>
+          <video width="100%" controls>
+            <source src="https://www.youtube.com/watch?v=${videoId}" type="video/mp4">
+            您的瀏覽器不支持視頻標籤。
+          </video>
+        `;
+        
+        // 顯示下載鏈接
+        downloadLinkArea.innerHTML = `
+          <p>點擊下面的鏈接下載影片：</p>
+          <a href="${downloadUrl}" target="_blank">下載影片 (MP4 格式)</a>
+        `;
+      } else {
+        alert('請輸入有效的 YouTube 影片網址');
+      }
+    }
+  </script>
+
+</body>
+</html>
