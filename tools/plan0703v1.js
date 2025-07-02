@@ -748,3 +748,328 @@ async function querySinglePlanCode(planCode){
 
 async function handleDetailQuery(){
   detailQueryCount++;
+繼續完成完整的 JavaScript bookmarklet 語法：
+
+```javascript
+async function handleDetailQuery(){
+  detailQueryCount++;
+  if(detailQueryCount===1){showToast('第一次查詢詳細資料，僅補齊尚未載入的數據...','info',3000);await updateAllDetailsAndRefreshTable(false);}
+  else{
+    const confirmReset=confirm('您已點擊過「一鍵查詢全部詳細」。再次點擊將清空所有快取並重新查詢所有數據，這可能需要一些時間。您確定要繼續嗎？');
+    if(confirmReset){showToast('清空快取並重新查詢所有詳細資料中...','info',3000);await updateAllDetailsAndRefreshTable(true);}
+    else{showToast('已取消操作。','info');}
+  }
+}
+
+async function updateAllDetailsAndRefreshTable(forceFetch=false){
+  const rawData=_allRawData;
+  if(rawData.length===0&&!forceFetch){showToast('沒有原始數據可供查詢詳細資訊','warning');return;}
+  allProcessedData=await processAllDataForTable(rawData,apiBase,forceFetch);
+  if(allProcessedData.length>0){
+    if(sortKey){allProcessedData=sortData(allProcessedData,sortKey,sortAsc);}
+    renderTable();showToast('詳細資料查詢完成','success');
+  }else{renderTable();showToast('詳細查詢完成，但沒有可更新詳情的資料','warning');}
+}
+
+/**
+ * ========== 表格渲染 - 保持視窗位置 ==========
+ * 負責查詢結果的表格顯示、分頁、排序、篩選等功能
+ */
+function renderTable(){
+  let displayedData = filterSpecial ? allProcessedData.filter(r=>r.special) : allProcessedData;
+  
+  // 套用搜尋篩選
+  if(searchKeyword.trim()){
+    const keyword = searchKeyword.toLowerCase();
+    displayedData = displayedData.filter(row => {
+      return Object.values(row).some(value => 
+        String(value).toLowerCase().includes(keyword)
+      );
+    });
+  }
+  
+  const totalPages=Math.ceil(displayedData.length/pageSize);
+  const startIndex=(pageNo-1)*pageSize;
+  const endIndex=startIndex+pageSize;
+  const pageData=displayedData.slice(startIndex,endIndex);
+  const hasPrev=pageNo>1;
+  const hasNext=pageNor.special);
+  
+  // 檢查是否已有視窗存在
+  const existingModal=document.getElementById('planCodeQueryToolInstance');
+  
+  if(existingModal){
+    // 視窗已存在，只更新內容
+    updateTableContent(existingModal, displayedData, pageData, totalPages, hasPrev, hasNext, hasSpecialData);
+  }else{
+    // 第一次建立視窗
+    createNewTableModal(displayedData, pageData, totalPages, hasPrev, hasNext, hasSpecialData);
+  }
+}
+
+/**
+ * 更新現有表格內容（不重新建立視窗）
+ */
+function updateTableContent(modal, displayedData, pageData, totalPages, hasPrev, hasNext, hasSpecialData){
+  // 更新表格內容
+  const bodyElement=modal.querySelector('.pct-modal-body');
+  bodyElement.innerHTML=`
+    ${renderSummary(displayedData,hasSpecialData)}
+    ${renderSearchBox()}
+    ${renderTableHTML(pageData)}
+  `;
+  
+  // 更新分頁按鈕狀態
+  const prevBtn=modal.querySelector('#pct-table-prev');
+  const nextBtn=modal.querySelector('#pct-table-next');
+  const pageInfo=modal.querySelector('.pct-pagination-info');
+  
+  if(prevBtn){
+    prevBtn.disabled=!hasPrev;
+    prevBtn.onclick=()=>{if(pageNo>1){pageNo--;renderTable();}};
+  }
+  
+  if(nextBtn){
+    nextBtn.disabled=!hasNext;
+    nextBtn.onclick=()=>{if(pageNo查詢結果（${env==='PROD'?'正式環境':'測試環境'}）
+    
+      ${renderSummary(displayedData,hasSpecialData)}
+      ${renderSearchBox()}
+      ${renderTableHTML(pageData)}
+    
+    
+      上一頁
+      下一頁
+      第 ${pageNo} 頁 / 共 ${totalPages} 頁 (總計 ${displayedData.length} 筆)
+      
+      一鍵查詢全部詳細
+      一鍵複製
+      ${hasSpecialData?`${filterSpecial?'顯示全部':'篩選特殊狀態'}`:''}重新查詢
+      關閉
+    
+  `, modal=>{
+    bindTableEvents(modal, displayedData, totalPages);
+  });
+}
+
+/**
+ * 渲染搜尋框
+ */
+function renderSearchBox(){
+  return `
+    
+      
+      ${searchKeyword ? 
+        '✕' : 
+        '🔍'
+      }
+    
+  `;
+}
+
+function renderSummary(data,hasSpecialData){
+  const specialCount=data.filter(r=>r.special).length;
+  let html=`共 ${data.length} 筆`;
+  if(hasSpecialData){html+=`，其中特殊狀態: ${specialCount} 筆`;}
+  html+=``;return html;
+}
+
+/**
+ * 修正表格 HTML 渲染 - 加入排序箭頭
+ */
+function renderTableHTML(data){
+  if(!data||data.length===0){
+    return`查無資料`;
+  }
+  
+  // 表格標題定義
+  const headers = [
+    {key: 'no', label: 'No'},
+    {key: 'planCode', label: '代號'},
+    {key: 'shortName', label: '商品名稱'},
+    {key: 'currency', label: '幣別'},
+    {key: 'unit', label: '單位'},
+    {key: 'coverageType', label: '類型'},
+    {key: 'saleStartDate', label: '銷售起日'},
+    {key: 'saleEndDate', label: '銷售迄日'},
+    {key: 'mainStatus', label: '主約狀態'},
+    {key: 'polpln', label: 'POLPLN'},
+    {key: '', label: '通路資訊'}
+  ];
+  
+  let html=``;
+  
+  // 渲染表格標題與排序箭頭
+  headers.forEach(header => {
+    if(header.key){
+      const sortClass = sortKey === header.key ? (sortAsc ? 'sort-asc' : 'sort-desc') : '';
+      html += `${header.label}`;
+    } else {
+      html += `${header.label}`;
+    }
+  });
+  
+  html += ``;
+  
+  // 渲染表格內容
+  data.forEach(row=>{
+    if(row._isErrorRow){
+      html+=`${row.no}${Utils.escapeHtml(row.planCode)}${row.saleEndDate}重新查詢`;
+      return;
+    }
+    const channelHtml=(row.channels||[]).map(c=>{
+      const statusClass=c.status===AppConfig.SALE_STATUS.CURRENT?'pct-status-onsale':(c.status===AppConfig.SALE_STATUS.STOPPED?'pct-status-offsale':(c.status===AppConfig.SALE_STATUS.ABNORMAL?'pct-status-abnormal':'pct-status-pending'));
+      return`${Utils.escapeHtml(c.channel)}:${Utils.escapeHtml(c.saleEndDate)}（${Utils.escapeHtml(c.status)}）`;
+    }).join('');
+    html+=`${row.no}${Utils.escapeHtml(row.planCode)}${Utils.escapeHtml(row.shortName)}${Utils.escapeHtml(row.currency)}${Utils.escapeHtml(row.unit)}${Utils.escapeHtml(row.coverageType)}${Utils.escapeHtml(row.saleStartDate)}${Utils.escapeHtml(row.saleEndDate)}${Utils.escapeHtml(row.mainStatus)}${Utils.escapeHtml(row.polpln||'')}${channelHtml}`;
+  });
+  html+=``;
+  return html;
+}
+
+/**
+ * 綁定表格相關事件 - 加入搜尋防抖
+ */
+function bindTableEvents(modal, displayedData, totalPages){
+  // 搜尋框事件 - 防抖處理
+  const searchInput = modal.querySelector('#pct-search-input');
+  const searchClear = modal.querySelector('#pct-search-clear');
+  
+  if(searchInput){
+    searchInput.addEventListener('input', e => {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        searchKeyword = e.target.value;
+        pageNo = 1;  // 搜尋時回到第一頁
+        renderTable();
+      }, 300);  // 300ms 防抖
+    });
+  }
+  
+  if(searchClear){
+    searchClear.addEventListener('click', () => {
+      searchKeyword = '';
+      pageNo = 1;
+      renderTable();
+    });
+  }
+  
+  // 分頁按鈕
+  const prevBtn=modal.querySelector('#pct-table-prev');
+  const nextBtn=modal.querySelector('#pct-table-next');
+  
+  if(prevBtn) prevBtn.onclick=()=>{if(pageNo>1){pageNo--;renderTable();}};
+  if(nextBtn) nextBtn.onclick=()=>{if(pageNo{handleDetailQuery();};
+  modal.querySelector('#pct-table-copy').onclick=()=>{Utils.copyTextToClipboard(renderTableText(displayedData),showToast);};
+  modal.querySelector('#pct-table-requery').onclick=()=>{showQueryDialog();};
+  modal.querySelector('#pct-table-close').onclick=()=>{closeModal();};
+  
+  // 篩選按鈕
+  const filterBtn=modal.querySelector('#pct-table-filter');
+  if(filterBtn){filterBtn.onclick=()=>{filterSpecial=!filterSpecial;pageNo=1;renderTable();};}
+  
+  // 表格排序 - 更新排序狀態
+  modal.querySelectorAll('.pct-table th[data-key]').forEach(th=>{
+    th.onclick=()=>{
+      const key=th.dataset.key;
+      if(!key)return;
+      
+      // 移除其他標題的排序樣式
+      modal.querySelectorAll('.pct-table th[data-key]').forEach(header => {
+        header.classList.remove('sort-asc', 'sort-desc');
+      });
+      
+      // 設定新的排序
+      if(sortKey===key){
+        sortAsc=!sortAsc;
+      } else {
+        sortKey=key;
+        sortAsc=true;
+      }
+      
+      // 加入排序樣式
+      th.classList.add(sortAsc ? 'sort-asc' : 'sort-desc');
+      
+      allProcessedData=sortData(allProcessedData,sortKey,sortAsc);
+      pageNo=1;
+      renderTable();
+    };
+  });
+  
+  // 重新查詢按鈕
+  modal.querySelectorAll('.pct-btn-retry').forEach(btn=>{
+    btn.onclick=async()=>{
+      const planCode=btn.getAttribute('data-plan');
+      await querySinglePlanCode(planCode);
+    }
+  });
+  
+  // 複製功能
+  modal.querySelectorAll('.pct-td-copy').forEach(td=>{
+    td.onclick=()=>{Utils.copyTextToClipboard(td.getAttribute('data-raw'),showToast);}
+  });
+}
+
+function renderTableText(data){
+  let txt=`No\t代號\t商品名稱\t幣別\t單位\t類型\t銷售起日\t銷售迄日\t主約狀態\tPOLPLN\t通路資訊\n`;
+  data.forEach(row=>{
+    let channelStr=(row.channels||[]).map(c=>`${c.channel}:${c.saleEndDate}（${c.status}）`).join(' / ');
+    txt+=`${row.no}\t${row.planCode}\t${row.shortName}\t${row.currency}\t${row.unit}\t${row.coverageType}\t${row.saleStartDate}\t${row.saleEndDate}\t${row.mainStatus}\t${row.polpln}\t${channelStr}\n`;
+  });
+  return txt;
+}
+
+/**
+ * ========== 初始化啟動 ==========
+ * 應用程式主要入口點，負責初始化與啟動流程
+ */
+if(!token){
+  showTokenDialog();
+}else{
+  showToast('正在驗證 Token，請稍候...','info');
+  verifyToken(token,apiBase).then(isValid=>{
+    if(isValid){
+      showToast('Token 驗證成功，已自動登入','success');
+      showQueryDialog();
+    }else{
+      showToast('Token 無效，請重新設定','warning');
+      localStorage.removeItem('SSO-TOKEN');
+      localStorage.removeItem('euisToken');
+      token='';
+      showTokenDialog();
+    }
+  }).catch(error=>{
+    console.error('TOKEN 驗證失敗:', error);
+    showToast('Token 驗證過程發生錯誤','error');
+    showTokenDialog();
+  });
+}
+
+})();
+```
+
+## **完整功能特色**
+
+### **✅ 核心功能**
+- **多種查詢模式**：商品代號、名稱、主檔資料、通路資料
+- **TOKEN 管理**：支援 SSO-TOKEN 和 euisToken，強制檢核+略過選項
+- **環境自動偵測**：UAT/PROD 環境自動切換
+
+### **✅ 表格功能**
+- **排序指示箭頭**：點擊標題排序，顯示 ↑↓ 箭頭
+- **搜尋防抖**：300ms 防抖，全欄位搜尋
+- **分頁保持視窗**：分頁時不關閉重開，視窗位置固定
+- **特殊狀態篩選**：標示並篩選異常狀態商品
+
+### **✅ UI/UX 優化**
+- **字體顏色加深**：提升可讀性
+- **拖曳功能**：可拖曳移動視窗
+- **響應式設計**：支援手機版面
+- **一鍵複製**：支援表格資料複製
+
+### **✅ 效能優化**
+- **快取機制**：POLPLN 和通路資料快取
+- **批量查詢**：支援多商品代號同時查詢
+- **錯誤處理**：完整的錯誤提示與重試機制
+
+**這是完整可執行的 bookmarklet 工具，包含所有你要求的功能！**
