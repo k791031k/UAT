@@ -14,6 +14,13 @@
     "action_script": "javascript:(function(){var isEditable = document.body.contentEditable === 'true'; if(isEditable){ document.body.contentEditable = 'false'; var elements = document.querySelectorAll('[readonly], [disabled]'); elements.forEach(function(element){if(!element.hasAttribute('readonly')){element.setAttribute('readonly', 'true'); } if(!element.hasAttribute('disabled')){element.setAttribute('disabled', 'true'); } }); }else{ document.body.contentEditable = 'true'; var elements = document.querySelectorAll('[readonly], [disabled]'); elements.forEach(function(element){element.removeAttribute('readonly');element.removeAttribute('disabled');});}})();"
   },
   {
+    "id": "表格",
+    "description": "就是把表格複製起來啊",
+    "category": "系統工具",
+    "type": "utility",
+    "action_script": "javascript:(function(){alert('%E8%AB%8B%E9%BB%9E%E6%93%8A%E6%82%A8%E6%83%B3%E8%A6%81%E8%A4%87%E8%A3%BD%E7%9A%84%E8%A1%A8%E6%A0%BC%E3%80%82\n\n%E9%BB%9E%E6%93%8A%E5%BE%8C%EF%BC%8C%E8%A1%A8%E6%A0%BC%E5%85%A7%E5%AE%B9%E6%9C%83%E5%98%97%E8%A9%A6%E8%A4%87%E8%A3%BD%E5%88%B0%E5%89%AA%E8%B2%BC%E7%B0%BF%EF%BC%8C%E6%88%96%E5%9C%A8%E6%96%B0%E8%A6%96%E7%AA%97%E9%A1%AF%E7%A4%BA%E4%BE%9B%E6%82%A8%E6%89%8B%E5%8B%95%E8%A4%87%E8%A3%BD%E3%80%82');function getCellText(cell){return cell.innerText.trim().replace(/\s+/g,' ')}function tableToTSV(table){let tsv=[];for(const row of table.rows){let rowData=[];for(const cell of row.cells){rowData.push(getCellText(cell))}tsv.push(rowData.join('\t'))}return tsv.join('\n')}function handleClick(event){let clickedElement=event.target;let tableElement=null;while(clickedElement&&clickedElement.tagName!=='BODY'&&clickedElement.tagName!=='HTML'){if(clickedElement.tagName==='TABLE'){tableElement=clickedElement;break}clickedElement=clickedElement.parentElement}document.removeEventListener('click',handleClickCapture,true);if(tableElement){event.preventDefault();event.stopPropagation();const tsvData=tableToTSV(tableElement);if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(tsvData).then(function(){alert('%E8%A1%A8%E6%A0%BC%E5%85%A7%E5%AE%B9%E5%B7%B2%E6%88%90%E5%8A%9F%E8%A4%87%E8%A3%BD%E5%88%B0%E5%89%AA%E8%B2%BC%E7%B0%BF%EF%BC%81\n\n%E6%82%A8%E5%8F%AF%E4%BB%A5%E7%9B%B4%E6%8E%A5%E8%B2%BC%E5%88%B0 Excel%E3%80%81Google Sheets %E7%AD%89%E8%A9%A6%E7%AE%97%E8%A1%A8%E8%BB%9F%E9%AB%94%E4%B8%AD%E3%80%82')},function(err){console.warn('%E8%87%AA%E5%8B%95%E8%A4%87%E8%A3%BD%E5%88%B0%E5%89%AA%E8%B2%BC%E7%B0%BF%E5%A4%B1%E6%95%97: ',err);showDataInTextarea(tsvData,'%E8%87%AA%E5%8B%95%E8%A4%87%E8%A3%BD%E5%A4%B1%E6%95%97%EF%BC%8C%E8%AB%8B%E6%89%8B%E5%8B%95%E8%A4%87%E8%A3%BD%E4%BB%A5%E4%B8%8B%E5%85%A7%E5%AE%B9%EF%BC%9A')})}else{showDataInTextarea(tsvData,'%E6%82%A8%E7%9A%84%E7%80%8F%E8%A6%BD%E5%99%A8%E5%8F%AF%E8%83%BD%E4%B8%8D%E6%94%AF%E6%8F%B4%E8%87%AA%E5%8B%95%E8%A4%87%E8%A3%BD%EF%BC%8C%E6%88%96%E7%9B%AE%E5%89%8D%E9%9D%9E%E5%AE%89%E5%85%A8%E9%80%A3%E7%B7%9A(HTTPS)%E3%80%82\n%E8%AB%8B%E6%89%8B%E5%8B%95%E8%A4%87%E8%A3%BD%E4%BB%A5%E4%B8%8B%E5%85%A7%E5%AE%B9%EF%BC%9A')}}else{alert('%E6%82%A8%E9%BB%9E%E6%93%8A%E7%9A%84%E5%8D%80%E5%9F%9F%E6%9C%AA%E5%81%B5%E6%B8%AC%E5%88%B0%E8%A1%A8%E6%A0%BC%E3%80%82\n\n%E8%AB%8B%E9%87%8D%E6%96%B0%E5%9F%B7%E8%A1%8C%E6%9B%B8%E7%B1%A4%E5%B0%8F%E5%B7%A5%E5%85%B7%EF%BC%8C%E7%84%B6%E5%BE%8C%E7%A2%BA%E5%AF%A6%E9%BB%9E%E6%93%8A%E5%9C%A8%E6%82%A8%E6%83%B3%E8%A4%87%E8%A3%BD%E7%9A%84%E8%A1%A8%E6%A0%BC%E5%85%A7%E9%83%A8%E3%80%82')}}function showDataInTextarea(data,message){const newWindow=window.open('','_blank');if(newWindow){newWindow.document.open();newWindow.document.write('<html lang=\"zh-Hant\"><head><title>%E8%A4%87%E8%A3%BD%E8%A1%A8%E6%A0%BC%E5%85%A7%E5%AE%B9</title><meta charset=\"UTF-8\"><style>body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; } p { font-size: 16px; } textarea { width: 95%; height: 75vh; margin-top: 10px; font-family: Consolas, \"Courier New\", monospace; font-size: 14px; border: 1px solid #ccc; padding: 10px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); } .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }</style></head><body><div class=\"container\"><p>'+message+'</p><textarea readonly></textarea><p><b>操作提示：</b>請全選 (Ctrl+A 或 Cmd+A) 文字框內容，然後複製 (Ctrl+C 或 Cmd+C)，再貼到您的試算表軟體中。</p></div></body></html>');newWindow.document.close();const textarea=newWindow.document.querySelector('textarea');if(textarea){textarea.value=data;textarea.select()}newWindow.focus()}else{alert('無法開啟新視窗顯示表格內容。請檢查您的瀏覽器是否封鎖了彈出視窗。\n\n表格內容已嘗試輸出到開發者工具的控制台(Console)。');console.log(\"請複製以下表格內容 (TSV格式):\n\",data)}}function handleClickCapture(event){if(event.button===0){handleClick(event)}else{document.removeEventListener('click',handleClickCapture,true)}}document.addEventListener('click',handleClickCapture,true)})();"
+  },
+  {
     "id": "商品查詢",
     "description": "現售停售通路都可以查",
     "category": "商品",
@@ -21,9 +28,9 @@
     "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT/plan_07v1.js"
   },
   {
-    "id": "預覽js"
+    "id": "預覽js",
     "description": "預覽javascript",
-    "category": “html",
+    "category": "html",
     "type": "utility",
     "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT/preview.html"
   },
@@ -71,7 +78,7 @@
   },
   {
     "id": "P1.js",
-    "description": "計畫工具 1",	
+    "description": "計畫工具 1",
     "category": "plan",
     "type": "action",
     "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT/P1.js"
