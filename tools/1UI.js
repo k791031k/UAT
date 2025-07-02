@@ -251,7 +251,11 @@
 
     function processData(rawData) {
         originalData = [];
-        if (!Array.isArray(rawData)) return;
+        if (!Array.isArray(rawData)) {
+            loadingStatus.innerText = 'JSON 格式錯誤，請確認檔案內容為陣列。';
+            functionTable.style.display = 'none';
+            return;
+        }
         rawData.forEach((item, index) => {
             const validation = validateFunctionItem(item, index);
             originalData.push(validation.item);
@@ -284,10 +288,12 @@
     function loadFunctionData() {
         const timestamp = Date.now();
         const urls = [
-            `https://cdn.jsdelivr.net/gh/k791031k/UAT/tools/FT.json?v=${timestamp}`        ];
+            `https://cdn.jsdelivr.net/gh/k791031k/UAT/tools/FT.json?v=${timestamp}`
+        ];
         async function fetchData() {
             const local = loadFromLocalStorage();
             if(local) { processData(local); }
+            let loaded = false;
             for (const url of urls) {
                 try {
                     const res = await fetch(url, {cache: 'no-cache'});
@@ -295,10 +301,15 @@
                     const data = await res.json();
                     processData(data);
                     saveToLocalStorage(data);
+                    loaded = true;
                     return;
                 } catch(e) {
+                    loadingStatus.innerText = '載入失敗：' + e.message;
                     console.error('載入失敗:', url, e);
                 }
+            }
+            if (!loaded) {
+                loadingStatus.innerText = '所有來源載入失敗，請檢查網路或 JSON 格式。';
             }
         }
         fetchData();
@@ -359,6 +370,7 @@
                 saveToLocalStorage(data);
                 alert('匯入成功！');
             } catch (err) {
+                loadingStatus.innerText = '匯入失敗，請確認檔案格式正確。';
                 alert('匯入失敗，請確認檔案格式正確。');
             }
         };
