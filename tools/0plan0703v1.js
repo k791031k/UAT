@@ -50,9 +50,9 @@ const AppConfig = Object.freeze({
     CHANNELS: ['AG','BR','BK','WS','EC']
   },
   DEFAULT_QUERY_PARAMS: {
-    PAGE_SIZE_MASTER: 1000,
-    PAGE_SIZE_CHANNEL: 1000,
-    PAGE_SIZE_DETAIL: 20,
+    PAGE_SIZE_MASTER: 5000,
+    PAGE_SIZE_CHANNEL: 5000,
+    PAGE_SIZE_DETAIL: 50,
     PAGE_SIZE_TABLE: 50
   }
 });
@@ -842,7 +842,7 @@ async function handleDetailQuery(){
       showToast('補齊所有詳細資料中，請稍候...','info', 60000);
       await updateAllDetailsAndRefreshTable(false);
   } else {
-    const confirmReset=confirm('您已點擊過「一鍵查詢全部詳細」。再次點擊將清空所有快取並重新查詢所有數據，這可能需要一些時間。您確定要繼續嗎？');
+    const confirmReset=confirm('您已點擊過「查詢全部」。再次點擊將清空所有快取並重新查詢所有數據，這可能需要一些時間。您確定要繼續嗎？');
     if(confirmReset){
         showToast('清空快取並重新查詢所有詳細資料中...','info',60000);
         await updateAllDetailsAndRefreshTable(true);
@@ -920,7 +920,7 @@ function updateTableContent(modal, displayedData, pageData, totalPages){
     const hasSpecialData = allProcessedData.some(r => r.special);
     footerElement.innerHTML = `
         ${renderPagination(displayedData.length, totalPages)}
-        <button class="pct-btn pct-btn-info" id="pct-table-detail-query">一鍵查詢全部詳細</button>
+        <button class="pct-btn pct-btn-info" id="pct-table-detail-query">查詢全部</button>
         <button class="pct-btn pct-btn-success" id="pct-table-copy">一鍵複製</button>
         ${hasSpecialData ? `<button class="pct-btn pct-filter-btn ${filterSpecial ? 'pct-filter-btn-active' : ''}" id="pct-table-filter">${filterSpecial?'顯示全部':'篩選特殊狀態'}</button>`:''}
         <button class="pct-btn pct-btn-secondary" id="pct-table-requery">重新查詢</button>
@@ -942,7 +942,7 @@ function createNewTableModal(displayedData, pageData, totalPages){
     </div>
     <div class="pct-modal-footer">
         ${renderPagination(displayedData.length, totalPages)}
-        <button class="pct-btn pct-btn-info" id="pct-table-detail-query">一鍵查詢全部詳細</button>
+        <button class="pct-btn pct-btn-info" id="pct-table-detail-query">查詢全部</button>
         <button class="pct-btn pct-btn-success" id="pct-table-copy">一鍵複製</button>
         ${hasSpecialData ? `<button class="pct-btn pct-filter-btn ${filterSpecial ? 'pct-filter-btn-active' : ''}" id="pct-table-filter">${filterSpecial?'顯示全部':'篩選特殊狀態'}</button>`:''}
         <button class="pct-btn pct-btn-secondary" id="pct-table-requery">重新查詢</button>
