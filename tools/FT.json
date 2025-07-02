@@ -25,7 +25,7 @@
     "description": "現售停售通路都可以查",
     "category": "商品",
     "type": "action",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT/plan_07v1.js"
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/TRY/plan0702.js"
   },
   {
     "id": "預覽js",
