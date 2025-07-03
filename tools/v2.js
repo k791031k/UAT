@@ -82,7 +82,7 @@ const Utils = {
     if(sS.getTime()>sE.getTime())return AppConfig.SALE_STATUS.ABNORMAL;
     if(saleEndStr.includes('99991231')||saleEndStr.includes('9999-12-31'))return AppConfig.SALE_STATUS.CURRENT;
     if(today>sE)return AppConfig.SALE_STATUS.STOPPED;
-    if(today=sS&&today BK) */
+    if(today=sS&&today OT) */
   channelCodeConvert: code => code==='OT'?'BK':code,
   
   /** 幣別代碼轉換為顯示名稱 */
