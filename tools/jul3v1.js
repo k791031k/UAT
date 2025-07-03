@@ -132,7 +132,6 @@ const Utils = {
   splitInput: input => input.trim().split(/[\s,;，；、|\n\r]+/).filter(Boolean)
 };
 
-
 /**
  * ========== 樣式注入 ==========
  * 注入完整的 CSS 樣式定義，包含響應式設計與主題色彩
@@ -545,7 +544,16 @@ async function loadDetailDataInBackground(processedData, apiBaseUrl, forceFetch 
   const BATCH_SIZE = 20; // 每批處理 20 個項目
   
   // 分批處理詳細資料
-  for (let i = 0; i  {
+  for (let i = 0; i < processedData.length; i += BATCH_SIZE) {
+    const batch = processedData.slice(i, i + BATCH_SIZE);
+    const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(processedData.length / BATCH_SIZE);
+    
+    showToast(`載入詳細資料 第 ${batchNumber}/${totalBatches} 批...`, 'info', 1000);
+    
+    // 並行處理當前批次
+    await Promise.all(
+      batch.map(async (item, batchIndex) => {
         if (item._isErrorRow || !item._loading) return;
         
         const globalIndex = i + batchIndex;
@@ -594,12 +602,35 @@ function updateSingleRowInTable(rowIndex) {
   const currentPageEnd = currentPageStart + pageSize;
   
   // 檢查該行是否在當前頁面
-  if (rowIndex >= currentPageStart && rowIndex  {
+  if (rowIndex >= currentPageStart && rowIndex < currentPageEnd) {
+    const displayRowIndex = rowIndex - currentPageStart;
+    const targetRow = rows[displayRowIndex];
+    
+    if (targetRow && allProcessedData[rowIndex]) {
+      const item = allProcessedData[rowIndex];
+      
+      // 更新 POLPLN 欄位
+      const polplnCell = targetRow.cells[9]; // POLPLN 是第 10 欄
+      if (polplnCell) {
+        polplnCell.textContent = item.polpln;
+        polplnCell.setAttribute('data-raw', item.polpln);
+        
+        // 移除載入中的樣式
+        if (!item._loading) {
+          polplnCell.style.color = '';
+          polplnCell.style.fontStyle = '';
+        }
+      }
+      
+      // 更新通路資訊欄位
+      const channelCell = targetRow.cells[10]; // 通路資訊是第 11 欄
+      if (channelCell && item.channels) {
+        const channelHtml = item.channels.map(c => {
           const statusClass = c.status === AppConfig.SALE_STATUS.CURRENT ? 'pct-status-onsale' : 
                              (c.status === AppConfig.SALE_STATUS.STOPPED ? 'pct-status-offsale' : 
                              (c.status === AppConfig.SALE_STATUS.ABNORMAL ? 'pct-status-abnormal' : 'pct-status-pending'));
-          return `${Utils.escapeHtml(c.channel)}:${Utils.escapeHtml(c.saleEndDate)}（${Utils.escapeHtml(c.status)}）`;
-        }).join('');
+          return `<span class="${statusClass}">${Utils.escapeHtml(c.channel)}:${Utils.escapeHtml(c.saleEndDate)}（${Utils.escapeHtml(c.status)}）</span>`;
+        }).join('<br>');
         
         channelCell.innerHTML = channelHtml;
       }
@@ -622,20 +653,36 @@ function sortData(data,sortKey,sortAsc){
       if(isNaN(dateA))return sortAsc?1:-1;
       if(isNaN(dateB))return sortAsc?-1:1;
       if(dateA>dateB)return sortAsc?1:-1;
-      if(dateAvalB)return sortAsc?1:-1;
-    if(valA商品查詢小工具（${env==='PROD'?'正式環境':'測試環境'}）
-    
-      
-        請輸入 SSO-TOKEN：
-        ${token||''}
-        
-      
-    
-    
-      驗證並繼續
-      略過檢核
-      取消
-    
+      if(dateA<dateB)return sortAsc?-1:1;
+      return 0;
+    }
+    if(valA===undefined||valA===null)return sortAsc?1:-1;
+    if(valB===undefined||valB===null)return sortAsc?-1:1;
+    if(typeof valA==='string'&&typeof valB==='string'){return sortAsc?valA.localeCompare(valB):valB.localeCompare(valA);}
+    if(valA>valB)return sortAsc?1:-1;
+    if(valA<valB)return sortAsc?-1:1;
+    return 0;
+  });
+}
+
+/**
+ * ========== 查詢流程 ==========
+ */
+function showTokenDialog(){
+  showModal(`
+    <div class="pct-modal-header"><span id="pct-modal-title">商品查詢小工具（${env==='PROD'?'正式環境':'測試環境'}）</span></div>
+    <div class="pct-modal-body">
+      <div class="pct-form-group">
+        <label for="pct-token-input" class="pct-label">請輸入 SSO-TOKEN：</label>
+        <textarea class="pct-input" id="pct-token-input" rows="4" placeholder="請貼上您的 SSO-TOKEN" autocomplete="off">${token||''}</textarea>
+        <div class="pct-error" id="pct-token-err" style="display:none;"></div>
+      </div>
+    </div>
+    <div class="pct-modal-footer">
+      <button class="pct-btn" id="pct-token-ok">驗證並繼續</button>
+      <button class="pct-btn pct-btn-secondary" id="pct-token-skip">略過檢核</button>
+      <button class="pct-btn pct-btn-secondary" id="pct-token-cancel">取消</button>
+    </div>
   `, modal=>{
     const tokenInput=modal.querySelector('#pct-token-input');
     const confirmBtn=modal.querySelector('#pct-token-ok');
@@ -690,21 +737,21 @@ function sortData(data,sortKey,sortAsc){
 function showQueryDialog(){
   const primaryQueryModes=[AppConfig.QUERY_MODES.PLAN_CODE,AppConfig.QUERY_MODES.PLAN_NAME,AppConfig.QUERY_MODES.ALL_MASTER_PLANS,'masterDataCategory','channelDataCategory'];
   showModal(`
-    查詢條件設定
-    
-      查詢模式：
-        
-          ${primaryQueryModes.map(mode=>`${modeLabel(mode)}`).join('')}
-        
-      
-      
-      
-    
-    
-      開始查詢
-      取消
-      清除選擇
-    
+    <div class="pct-modal-header"><span id="pct-modal-title">查詢條件設定</span></div>
+    <div class="pct-modal-body">
+      <div class="pct-form-group"><div class="pct-label">查詢模式：</div>
+        <div id="pct-mode-wrap" class="pct-mode-card-grid">
+          ${primaryQueryModes.map(mode=>`<div class="pct-mode-card" data-mode="${mode}">${modeLabel(mode)}</div>`).join('')}
+        </div>
+      </div>
+      <div id="pct-dynamic-query-content"></div>
+      <div class="pct-form-group"><div class="pct-error" id="pct-query-err" style="display:none"></div></div>
+    </div>
+    <div class="pct-modal-footer">
+      <button class="pct-btn" id="pct-query-ok">開始查詢</button>
+      <button class="pct-btn pct-btn-secondary" id="pct-query-cancel">取消</button>
+      <button class="pct-btn pct-btn-secondary" id="pct-query-clear-selection">清除選擇</button>
+    </div>
   `, modal=>{
     let currentPrimaryMode=queryMode,currentQueryInput=queryInput,currentSubOptions=[...querySubOption],currentChannels=[...queryChannels];
     const dynamicContentArea=modal.querySelector('#pct-dynamic-query-content'),modeCards=modal.querySelectorAll('#pct-mode-wrap .pct-mode-card'),queryOkBtn=modal.querySelector('#pct-query-ok'),queryCancelBtn=modal.querySelector('#pct-query-cancel'),clearSelectionBtn=modal.querySelector('#pct-query-clear-selection');
@@ -714,16 +761,16 @@ function showQueryDialog(){
       let inputHtml='',subOptionHtml='',channelSelectionHtml='';
       switch(currentPrimaryMode){
         case AppConfig.QUERY_MODES.PLAN_CODE:
-          inputHtml=`輸入商品代碼：`;break;
+          inputHtml=`<div class="pct-form-group"><label for="pct-query-input" class="pct-label">輸入商品代碼：</label><textarea class="pct-input" id="pct-query-input" rows="3" placeholder="請輸入商品代碼 (多筆請用空格、逗號、分號或換行分隔)"></textarea></div>`;break;
         case AppConfig.QUERY_MODES.PLAN_NAME:
-          inputHtml=`輸入商品名稱關鍵字：`;break;
+          inputHtml=`<div class="pct-form-group"><label for="pct-query-input" class="pct-label">輸入商品名稱關鍵字：</label><textarea class="pct-input" id="pct-query-input" rows="3" placeholder="請輸入商品名稱關鍵字"></textarea></div>`;break;
         case AppConfig.QUERY_MODES.ALL_MASTER_PLANS:
-          inputHtml=`將查詢所有主檔商品，無需輸入任何條件。`;break;
+          inputHtml=`<div style="text-align: center; padding: 20px; color: var(--text-color-light);">將查詢所有主檔商品，無需輸入任何條件。</div>`;break;
         case 'masterDataCategory':
-          subOptionHtml=`選擇主檔查詢範圍：現售商品停售商品`;break;
+          subOptionHtml=`<div class="pct-form-group"><div class="pct-label">選擇主檔查詢範圍：</div><div class="pct-sub-option-grid"><div class="pct-sub-option" data-sub-option="${AppConfig.QUERY_MODES.MASTER_IN_SALE}">現售商品</div><div class="pct-sub-option" data-sub-option="${AppConfig.QUERY_MODES.MASTER_STOPPED}">停售商品</div></div></div>`;break;
         case 'channelDataCategory':
-          channelSelectionHtml=`選擇通路：(可多選，不選則查詢所有通路)${AppConfig.FIELD_MAPS.CHANNELS.map(ch=>`${ch}`).join('')}`;
-          subOptionHtml=`選擇通路銷售範圍：現售通路停售通路`;break;
+          channelSelectionHtml=`<div class="pct-form-group"><div class="pct-label">選擇通路：(可多選，不選則查詢所有通路)</div><div class="pct-channel-option-grid">${AppConfig.FIELD_MAPS.CHANNELS.map(ch=>`<div class="pct-channel-option" data-channel="${ch}">${ch}</div>`).join('')}</div></div>`;
+          subOptionHtml=`<div class="pct-form-group"><div class="pct-label">選擇通路銷售範圍：</div><div class="pct-sub-option-grid"><div class="pct-sub-option" data-sub-option="${AppConfig.QUERY_MODES.CHANNEL_IN_SALE}">現售通路</div><div class="pct-sub-option" data-sub-option="${AppConfig.QUERY_MODES.CHANNEL_STOPPED}">停售通路</div></div></div>`;break;
       }
       dynamicContentArea.innerHTML=inputHtml+channelSelectionHtml+subOptionHtml;
       const newQueryInput=dynamicContentArea.querySelector('#pct-query-input');
@@ -768,10 +815,10 @@ function showQueryDialog(){
 function modeLabel(mode){
   switch(mode){
     case AppConfig.QUERY_MODES.PLAN_CODE: return'商品代號';
-    case AppConfig.QUERY_MODES.PLAN_NAME: return'商品名稱關鍵字';
-    case AppConfig.QUERY_MODES.ALL_MASTER_PLANS: return'查詢全部主檔';
-    case 'masterDataCategory': return'主檔資料';
-    case 'channelDataCategory': return'通路資料';
+    case AppConfig.QUERY_MODES.PLAN_NAME: return'商品名稱';
+    case AppConfig.QUERY_MODES.ALL_MASTER_PLANS: return'查詢全部';
+    case 'masterDataCategory': return'查詢主檔';
+    case 'channelDataCategory': return'查詢通路';
     case AppConfig.QUERY_MODES.MASTER_IN_SALE: return'主檔現售';
     case AppConfig.QUERY_MODES.MASTER_STOPPED: return'主檔停售';
     case AppConfig.QUERY_MODES.CHANNEL_IN_SALE: return'通路現售';
@@ -790,7 +837,16 @@ async function queryMultiplePlanCodes(planCodes) {
   showToast(`開始批量查詢 ${planCodes.length} 個商品代號...`, 'info', 3000);
   
   // 分批處理
-  for (let i = 0; i  {
+  for (let i = 0; i < planCodes.length; i += BATCH_SIZE) {
+    const batch = planCodes.slice(i, i + BATCH_SIZE);
+    const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(planCodes.length / BATCH_SIZE);
+    
+    showToast(`處理第 ${batchNumber}/${totalBatches} 批 (${batch.length} 個商品)...`, 'info', 1500);
+    
+    // 使用 Promise.all() 並行處理當前批次
+    const batchResults = await Promise.all(
+      batch.map(async (planCode) => {
         try {
           const params = {
             planCode,
@@ -831,6 +887,7 @@ async function queryMultiplePlanCodes(planCodes) {
     totalRecords: allRecords.length
   };
 }
+
 
 /**
  * 查詢全部通路資料
@@ -1405,3 +1462,4 @@ if(!token){
 }
 
 })();
+
