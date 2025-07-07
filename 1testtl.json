@@ -11,8 +11,8 @@
     "description": "網頁助理",
     "category": "系統工具",
     "type": "utility",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/TRY/webUI1.js?v=%27+Date.now()}, 
-
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/TRY/webUI1.js?v=%27+Date.now()"
+  }, 
   {
     "id": "編輯",
     "description": "就是編輯啊",
