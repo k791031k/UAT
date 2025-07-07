@@ -288,7 +288,7 @@
     function loadFunctionData() {
         const timestamp = Date.now();
         const urls = [
-            `https://cdn.jsdelivr.net/gh/k791031k/UAT/1testtl.json?v=${timestamp}`
+            `https://cdn.jsdelivr.net/gh/k791031k/UAT/00.json?v=${timestamp}`
         ];
         async function fetchData() {
             const local = loadFromLocalStorage();
