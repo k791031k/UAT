@@ -3,14 +3,11 @@ javascript:(function() {
 
   /**
    * ===================================================================
-   * 商品查詢小工具 v11.0.0 (最終修正完美版)
+   * 商品查詢小工具 v11.0.1 (Token 輸入修正版)
    *
-   * - [重大修正] 恢復 v6.0.0 的 Token 處理邏輯，包含「自動檢核」與「略過」按鈕。
-   * - [重大修正] 為所有輸入框新增「自動轉半形大寫」功能。
-   * - [重大修正] 為結果表格的標題欄位設定固定寬度，徹底解決畫面跳動問題。
-   * - [UI 還原] 「商品銷售時間」的選項 UI 恢復為 v6.0.0 的小牌卡樣式。
-   * - [邏輯釐清] 重新梳理並穩定化後端查詢與前端篩選的邏輯。
-   * - [版面修正] 所有對話框標題均靠左對齊。
+   * - [重大修正] 移除 Token 輸入框的自動轉大寫/半形功能，確保金鑰正確性。
+   * - [風格還原] UI/CSS 完全基於您最滿意的 v6.0.0 版本風格。
+   * - [功能完整] 包含所有新舊功能，並解決了破版問題。
    * ===================================================================
    */
 
@@ -26,7 +23,7 @@ javascript:(function() {
   const ConfigModule = Object.freeze({
     TOOL_ID: 'planCodeQueryToolInstance',
     STYLE_ID: 'planCodeToolStyle',
-    VERSION: '11.0.0-Final-Fix',
+    VERSION: '11.0.1-TokenFix',
     QUERY_MODES: {
       PLAN_CODE: 'planCode',
       PLAN_NAME: 'planCodeName',
@@ -60,7 +57,7 @@ javascript:(function() {
   const StateModule = (() => {
     const state = {
       env: (window.location.host.toLowerCase().includes('uat') || window.location.host.toLowerCase().includes('test')) ? 'UAT' : 'PROD',
-      apiBase: '', token: '', tokenCheckEnabled: true,
+      apiBase: '', token: '', tokenSource: 'none',
       queryMode: '', queryInput: '', masterStatusSelection: new Set(), channelStatusSelection: '', channelSelection: new Set(),
       allProcessedData: [], pageNo: 1, pageSize: ConfigModule.DEFAULT_QUERY_PARAMS.PAGE_SIZE_TABLE,
       isFullView: false, filterSpecial: false, searchKeyword: '', sortKey: 'no', sortAsc: true,
@@ -128,7 +125,7 @@ javascript:(function() {
         .pct-modal[data-size="results"] { width: 1200px; }
         .pct-modal.show{opacity:1;transform:translateX(-50%) translateY(0);}
         .pct-modal.dragging{transition:none;}
-        .pct-modal-header{padding:16px 50px 8px 20px;font-size:20px;font-weight:bold;border-bottom:1px solid var(--border-color);color:var(--text-color-dark);cursor:grab;position:relative;}
+        .pct-modal-header{display:flex;align-items:center;padding:16px 50px 8px 20px;font-size:20px;font-weight:bold;border-bottom:1px solid var(--border-color);color:var(--text-color-dark);cursor:grab;position:relative;}
         .pct-modal-header.dragging{cursor:grabbing;}
         .pct-modal-close-btn{position:absolute;top:50%;right:15px;transform:translateY(-50%);background:transparent;border:none;font-size:24px;line-height:1;color:var(--secondary-color);cursor:pointer;padding:5px;width:34px;height:34px;border-radius:50%;transition:background-color .2s, color .2s;display:flex;align-items:center;justify-content:center;}
         .pct-modal-close-btn:hover{background-color:var(--background-light);color:var(--text-color-dark);}
@@ -157,14 +154,10 @@ javascript:(function() {
         .pct-table{border-collapse:collapse;width:100%;font-size:14px;background:var(--surface-color);table-layout:fixed;min-width:1200px;}
         .pct-table th, .pct-table td{border:1px solid #ddd;padding:8px 10px;text-align:left;vertical-align:top;word-wrap:break-word;}
         .pct-table th { background:#f8f8f8;position:sticky;top:0;z-index:1;cursor:pointer; }
-        .pct-table th:nth-child(1) { width: 50px; } /* No */
-        .pct-table th:nth-child(2) { width: 90px; } /* 代號 */
-        .pct-table th:nth-child(3) { width: 250px; } /* 名稱 */
-        .pct-table th:nth-child(4), .pct-table th:nth-child(5), .pct-table th:nth-child(6) { width: 60px; } /* 幣別, 單位, 類型 */
-        .pct-table th:nth-child(7), .pct-table th:nth-child(8) { width: 95px; } /* 起日, 迄日 */
-        .pct-table th:nth-child(9) { width: 90px; } /* 主約狀態 */
-        .pct-table th:nth-child(10) { width: 120px; } /* POLPLN */
-        .pct-table th:nth-child(11) { width: auto; } /* 通路資訊 */
+        .pct-table th:nth-child(1) { width: 50px; } .pct-table th:nth-child(2) { width: 90px; }
+        .pct-table th:nth-child(3) { width: 250px; } .pct-table th:nth-child(4), .pct-table th:nth-child(5), .pct-table th:nth-child(6) { width: 60px; }
+        .pct-table th:nth-child(7), .pct-table th:nth-child(8) { width: 95px; } .pct-table th:nth-child(9) { width: 90px; }
+        .pct-table th:nth-child(10) { width: 120px; } .pct-table th:nth-child(11) { width: auto; }
         .pct-table th[data-key]:after{content:'';position:absolute;right:8px;top:50%;transform:translateY(-50%);opacity:0.3;font-size:12px;transition:opacity 0.2s;border:4px solid transparent;}
         .pct-table th[data-key].sort-asc:after{content:'';border-bottom-color:var(--primary-color);opacity:1;}
         .pct-table th[data-key].sort-desc:after{content:'';border-top-color:var(--primary-color);opacity:1;}
@@ -193,13 +186,7 @@ javascript:(function() {
     };
     const Toast = {
       show: (msg, type = 'info', duration = 3000) => { let e = document.getElementById('pct-toast'); if (e) e.remove(); e = document.createElement('div'); e.id = 'pct-toast'; document.body.appendChild(e); e.className = `pct-toast ${type}`; e.textContent = msg; e.classList.add('pct-toast-show'); if (duration > 0) { setTimeout(() => { e.classList.remove('pct-toast-show'); e.addEventListener('transitionend', () => e.remove(), { once: true }); }, duration); } },
-      confirm: (msg, onConfirm) => {
-        Toast.show('', 'warning', 0);
-        const toastEl = document.getElementById('pct-toast');
-        toastEl.innerHTML = `<div class="pct-confirm-toast"><span>${msg}</span><button id="pct-confirm-ok" class="pct-btn">確認</button><button id="pct-confirm-cancel" class="pct-btn pct-btn-secondary">取消</button></div>`;
-        document.getElementById('pct-confirm-ok').onclick = () => { Toast.close(); onConfirm(true); };
-        document.getElementById('pct-confirm-cancel').onclick = () => { Toast.close(); onConfirm(false); };
-      },
+      confirm: (msg, onConfirm) => { Toast.show('', 'warning', 0); const toastEl = document.getElementById('pct-toast'); toastEl.innerHTML = `<div class="pct-confirm-toast"><span>${msg}</span><button id="pct-confirm-ok" class="pct-btn">確認</button><button id="pct-confirm-cancel" class="pct-btn pct-btn-secondary">取消</button></div>`; document.getElementById('pct-confirm-ok').onclick = () => { Toast.close(); onConfirm(true); }; document.getElementById('pct-confirm-cancel').onclick = () => { Toast.close(); onConfirm(false); }; },
       close: () => { document.getElementById('pct-toast')?.remove(); }
     };
     const Modal = {
@@ -212,21 +199,8 @@ javascript:(function() {
       show: (text) => {
           let p = document.getElementById('pct-progress-container');
           const anchor = document.querySelector('.pct-modal-body');
-          if (!p && anchor) {
-              p = document.createElement('div');
-              p.id = 'pct-progress-container';
-              p.className = 'pct-progress-container';
-              anchor.prepend(p);
-          }
-          if(p) {
-            p.style.display = 'flex';
-            p.innerHTML = `<span class="pct-progress-text">${text}</span><div class="pct-progress-bar-wrapper"><div id="pct-progress-bar" class="pct-progress-bar"></div></div><button id="pct-abort-btn" class="pct-btn pct-abort-btn">中止</button>`;
-            document.getElementById('pct-abort-btn').onclick = () => {
-                StateModule.get().currentQueryController?.abort();
-                Progress.hide();
-                UIModule.Toast.show('查詢已中止', 'warning');
-            };
-          }
+          if (!p && anchor) { p = document.createElement('div'); p.id = 'pct-progress-container'; p.className = 'pct-progress-container'; anchor.prepend(p); }
+          if(p) { p.style.display = 'flex'; p.innerHTML = `<span class="pct-progress-text">${text}</span><div class="pct-progress-bar-wrapper"><div id="pct-progress-bar" class="pct-progress-bar"></div></div><button id="pct-abort-btn" class="pct-btn pct-abort-btn">中止</button>`; document.getElementById('pct-abort-btn').onclick = () => { StateModule.get().currentQueryController?.abort(); Progress.hide(); UIModule.Toast.show('查詢已中止', 'warning'); }; }
       },
       update: (percentage, text) => { const bar = document.getElementById('pct-progress-bar'); if (bar) bar.style.width = `${percentage}%`; const textEl = document.querySelector('.pct-progress-text'); if (textEl && text) textEl.textContent = text; },
       hide: () => { const p = document.getElementById('pct-progress-container'); if(p) p.style.display = 'none'; }
@@ -281,7 +255,7 @@ javascript:(function() {
       EventModule.setupGlobalKeyListener();
       const storedToken = [localStorage.getItem('SSO-TOKEN'), sessionStorage.getItem('SSO-TOKEN')].find(t => t && t.trim() !== 'null');
       if (storedToken) {
-        StateModule.set({ token: storedToken, tokenCheckEnabled: true });
+        StateModule.set({ token: storedToken, tokenSource: 'stored' });
         UIModule.Toast.show('正在自動驗證 Token...', 'info');
         if (await ApiModule.verifyToken(storedToken)) {
           UIModule.Toast.show('Token 驗證成功', 'success');
@@ -301,19 +275,20 @@ javascript:(function() {
       UIModule.Modal.show(`
         <div class="pct-modal-header"><span>設定 Token</span><button class="pct-modal-close-btn">&times;</button></div>
         <div class="pct-modal-body"><div class="pct-form-group"><label for="pct-token-input" class="pct-label">請輸入 SSO-TOKEN：</label><textarea class="pct-input" id="pct-token-input" rows="4" placeholder="請貼上您的 SSO-TOKEN"></textarea><div class="pct-error" id="pct-token-err" style="display:none;"></div></div></div>
-        <div class="pct-modal-footer"><div class="pct-modal-footer-right"><button class="pct-btn" id="pct-token-ok">驗證</button><button class="pct-btn pct-btn-secondary" id="pct-token-skip">略過</button></div></div>
+        <div class="pct-modal-footer"><div class="pct-modal-footer-right"><button class="pct-btn" id="pct-token-ok">驗證並繼續</button><button class="pct-btn pct-btn-secondary" id="pct-token-skip">略過</button></div></div>
       `, modal => {
         modal.setAttribute('data-size', 'query');
         const tokenInput = modal.querySelector('#pct-token-input');
-        tokenInput.addEventListener('input', EventModule.autoFormatInput);
-        modal.querySelector('#pct-token-ok').onclick = async () => { const val = tokenInput.value.trim(); if (!val) { UIModule.showError('請輸入 Token', 'pct-token-err'); return; } UIModule.Toast.show('正在檢查...', 'info'); StateModule.set({ token: val, tokenCheckEnabled: true }); if (await ApiModule.verifyToken(val)) { UIModule.Toast.show('Token 驗證成功', 'success'); showQueryDialog(); } else { UIModule.showError('Token 驗證失敗', 'pct-token-err'); StateModule.set({ token: '' }); } };
-        modal.querySelector('#pct-token-skip').onclick = () => { const val = tokenInput.value.trim(); if (val) { localStorage.setItem('SSO-TOKEN', val); StateModule.set({ token: val }); } else { localStorage.removeItem('SSO-TOKEN'); StateModule.set({ token: '' }); } StateModule.set({ tokenCheckEnabled: false }); UIModule.Toast.show('已略過驗證', 'warning'); showQueryDialog(); };
+        // Token 輸入框不需要自動轉換格式
+        modal.querySelector('#pct-token-ok').onclick = async () => { const val = tokenInput.value.trim(); if (!val) { UIModule.showError('請輸入 Token', 'pct-token-err'); return; } UIModule.Toast.show('正在檢查...', 'info'); StateModule.set({ token: val, tokenCheckEnabled: true, tokenSource: 'manual' }); if (await ApiModule.verifyToken(val)) { UIModule.Toast.show('Token 驗證成功', 'success'); showQueryDialog(); } else { UIModule.showError('Token 驗證失敗', 'pct-token-err'); StateModule.set({ token: '' }); } };
+        modal.querySelector('#pct-token-skip').onclick = () => { const val = tokenInput.value.trim(); if (val) { localStorage.setItem('SSO-TOKEN', val); StateModule.set({ token: val }); } else { localStorage.removeItem('SSO-TOKEN'); StateModule.set({ token: '' }); } StateModule.set({ tokenCheckEnabled: false, tokenSource: 'manual' }); UIModule.Toast.show('已略過驗證', 'warning'); showQueryDialog(); };
       });
     };
 
     const showQueryDialog = () => {
+        const { tokenSource } = StateModule.get();
         const modeLabel = m => ({[ConfigModule.QUERY_MODES.PLAN_CODE]:'商品代號', [ConfigModule.QUERY_MODES.PLAN_NAME]:'商品名稱', [ConfigModule.QUERY_MODES.MASTER_CLASSIFIED]:'商品銷售時間', [ConfigModule.QUERY_MODES.CHANNEL_CLASSIFIED]:'通路銷售時間'}[m] || m);
-        const footerLeftHTML = `<button class="pct-btn pct-btn-secondary" id="pct-back-to-token">修改 Token</button>`;
+        const footerLeftHTML = tokenSource === 'manual' ? `<button class="pct-btn pct-btn-secondary" id="pct-back-to-token">返回修改 Token</button>` : `<button class="pct-btn pct-btn-secondary" id="pct-query-clear">清除</button>`;
         
         UIModule.Modal.show(`
             <div class="pct-modal-header"><span>選擇查詢條件</span><button class="pct-modal-close-btn">&times;</button></div>
@@ -329,20 +304,23 @@ javascript:(function() {
                 modal.querySelectorAll('.pct-mode-card').forEach(c => c.classList.toggle('selected', c.dataset.mode === localState.mode));
                 let content = '';
                 switch (localState.mode) {
-                    case ConfigModule.QUERY_MODES.PLAN_CODE: content = `<div class="pct-form-group"><label class="pct-label">商品代碼：</label><textarea class="pct-input" id="pct-query-input" rows="3" placeholder="多筆可用空格、逗號或換行分隔"></textarea></div>`; break;
+                    case ConfigModule.QUERY_MODES.PLAN_CODE: content = `<div class="pct-form-group"><label class="pct-label">商品代號：</label><textarea class="pct-input" id="pct-query-input" rows="3" placeholder="多筆可用空格、逗號或換行分隔"></textarea></div>`; break;
                     case ConfigModule.QUERY_MODES.PLAN_NAME: content = `<div class="pct-form-group"><label class="pct-label">商品名稱：</label><textarea class="pct-input" id="pct-query-input" rows="3"></textarea></div>`; break;
                     case ConfigModule.QUERY_MODES.MASTER_CLASSIFIED: content = `<div class="pct-form-group"><div class="pct-sub-option-grid">${Object.values(ConfigModule.MASTER_STATUS_TYPES).map(s=>`<div class="pct-sub-option" data-type="masterStatus" data-value="${s}">${s}</div>`).join('')}</div><p style="font-size:12px;color:#666;margin-top:15px;">ⓘ 將掃描所有主檔資料，執行時間可能較長。</p></div>`; break;
-                    case ConfigModule.QUERY_MODES.CHANNEL_CLASSIFIED: content = `<div class="pct-form-group"><label class="pct-label">通路：(可多選)</label><div class="pct-channel-option-grid">${ConfigModule.FIELD_MAPS.CHANNELS.map(c=>`<div class="pct-channel-option" data-type="channels" data-value="${c}">${c}</div>`).join('')}</div></div><div class="pct-form-group"><label class="pct-label">銷售範圍：</label><div class="pct-sub-option-grid">${['現售','停售'].map(s=>`<div class="pct-sub-option" data-type="channelStatus" data-value="${s}">${s}</div>`).join('')}</div></div>`; break;
+                    case ConfigModule.QUERY_MODES.CHANNEL_CLASSIFIED: content = `<div class="pct-form-group"><label class="pct-label">通路：(可多選)</label><div class="pct-channel-option-grid">${ConfigModule.FIELD_MAPS.CHANNELS.map(c=>`<div class="pct-channel-option" data-type="channels" data-value="${c}">${c}</div>`).join('')}</div></div><div class="pct-form-group"><label class="pct-label" style="margin-top:15px;">銷售範圍：</label><div class="pct-sub-option-grid">${['現售','停售'].map(s=>`<div class="pct-sub-option" data-type="channelStatus" data-value="${s}">${s}</div>`).join('')}</div></div>`; break;
                 }
                 dynamicContent.innerHTML = content;
                 dynamicContent.querySelectorAll('.pct-input').forEach(el => el.addEventListener('input', EventModule.autoFormatInput));
                 const inputEl = dynamicContent.querySelector('#pct-query-input'); if (inputEl) { inputEl.value = localState.input; inputEl.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); okBtn.click(); }}; }
                 dynamicContent.querySelectorAll('[data-value]').forEach(el => { const type = el.dataset.type; if (type === 'masterStatus') el.classList.toggle('selected', localState.masterStatus.has(el.dataset.value)); else if (type === 'channels') el.classList.toggle('selected', localState.channels.has(el.dataset.value)); else if (type === 'channelStatus') el.classList.toggle('selected', localState.channelStatus === el.dataset.value); });
             };
+
             modal.querySelector('#pct-mode-wrap').onclick = e => { const card = e.target.closest('.pct-mode-card'); if (card) { localState = { mode: card.dataset.mode, input: '', masterStatus: new Set(), channelStatus: '', channels: new Set() }; updateUI(); } };
             dynamicContent.addEventListener('click', e => { const option = e.target.closest('[data-value]'); if (!option) return; const {type, value} = option.dataset; if (type === 'masterStatus') { if(localState.masterStatus.has(value)) localState.masterStatus.delete(value); else localState.masterStatus.add(value); } else if (type === 'channels') { if(localState.channels.has(value)) localState.channels.delete(value); else localState.channels.add(value); } else if (type === 'channelStatus') { localState.channelStatus = localState.channelStatus === value ? '' : value; } updateUI(); });
             dynamicContent.addEventListener('input', e => { if (e.target.id === 'pct-query-input') localState.input = e.target.value; });
-            modal.querySelector('#pct-back-to-token').onclick = showTokenDialog;
+            const backBtn = modal.querySelector('#pct-back-to-token'); if(backBtn) backBtn.onclick = showTokenDialog;
+            const clearBtn = modal.querySelector('#pct-query-clear'); if(clearBtn) clearBtn.onclick = () => { localState = { mode: '', input: '', masterStatus: new Set(), channelStatus: '', channels: new Set() }; updateUI(); };
+            
             okBtn.onclick = () => {
                 UIModule.hideError('pct-query-err');
                 if (localState.mode === ConfigModule.QUERY_MODES.MASTER_CLASSIFIED) {
@@ -351,7 +329,6 @@ javascript:(function() {
                 }
                 if (localState.mode === ConfigModule.QUERY_MODES.CHANNEL_CLASSIFIED && !localState.channelStatus) { UIModule.showError('請選擇通路銷售範圍', 'pct-query-err'); return; }
                 if (!localState.mode) { UIModule.showError('請選擇查詢模式', 'pct-query-err'); return; }
-                if (!StateModule.get().tokenCheckEnabled && !StateModule.get().token) { UIModule.Toast.show('略過模式下請提供 Token', 'error'); showTokenDialog(); return; }
                 StateModule.set({ queryMode: localState.mode, queryInput: localState.input, masterStatusSelection: localState.masterStatus, channelStatusSelection: localState.channelStatus, channelSelection: localState.channels });
                 executeQuery();
             };
@@ -368,7 +345,7 @@ javascript:(function() {
         StateModule.set({ currentQueryController: controller });
         const oldState = { ...StateModule.get() };
         StateModule.resetQueryState();
-        StateModule.set({ queryMode: oldState.queryMode, activeFrontendFilters: oldState.masterStatusSelection, tokenCheckEnabled: oldState.tokenCheckEnabled });
+        StateModule.set({ queryMode: oldState.queryMode, activeFrontendFilters: oldState.masterStatusSelection, tokenSource: oldState.tokenSource });
         
         const { queryMode, queryInput, masterStatusSelection, channelStatusSelection, channelSelection } = oldState;
 
@@ -423,7 +400,7 @@ javascript:(function() {
                 </table></div>
             </div>
             <div class="pct-modal-footer">
-                <div class="pct-modal-footer-left"><button class="pct-btn pct-btn-secondary" id="pct-view-toggle">${state.isFullView?'分頁顯示':'一頁顯示'}</button>${state.allProcessedData.some(r=>r.specialReason)?`<button class="pct-btn ${state.filterSpecial?'active':''} pct-filter-btn" id="pct-table-filter">${state.filterSpecial?'顯示全部':'篩選特殊'}</button>`:''}</div>
+                <div class="pct-modal-footer-left"><button class="pct-btn pct-btn-secondary" id="pct-view-toggle">${state.isFullView?'分頁顯示':'一頁顯示'}</button>${state.allProcessedData.some(r=>r.specialReason)?`<button class="pct-btn ${state.filterSpecial?'pct-filter-btn-active':'pct-filter-btn'}" id="pct-table-filter">${state.filterSpecial?'顯示全部':'篩選特殊'}</button>`:''}</div>
                 <div class="pct-pagination" style="display:${state.isFullView?'none':'flex'}"><button id="pct-table-prev" class="pct-btn" ${state.pageNo<=1?'disabled':''}>◀</button><span class="pct-pagination-info">${state.pageNo} / ${totalPages}</span><button id="pct-table-next" class="pct-btn" ${state.pageNo>=totalPages?'disabled':''}>▶</button></div>
                 <div class="pct-modal-footer-right"><button class="pct-btn pct-btn-info" id="pct-table-detail">查詢資料</button><button class="pct-btn pct-btn-success" id="pct-table-copy">一鍵複製</button><button class="pct-btn" id="pct-table-requery">重新查詢</button></div>
             </div>`;
@@ -459,6 +436,7 @@ javascript:(function() {
             targetRow.cells[9].textContent = item.polpln;
             targetRow.cells[9].dataset.raw = item.polpln;
             targetRow.cells[10].innerHTML = (item.channels||[]).map(c=>`<span>${UtilsModule.escapeHtml(c.channel)}:${UtilsModule.escapeHtml(c.saleEndDate)}</span>`).join('<br>');
+            targetRow.cells[10].dataset.raw = (item.channels||[]).map(c=>`${c.channel}:${c.saleEndDate}`).join('; ');
             if (item.specialReason) { targetRow.classList.add('special-row'); targetRow.title = item.specialReason; }
             else { targetRow.classList.remove('special-row'); targetRow.removeAttribute('title'); }
         }
@@ -472,7 +450,7 @@ javascript:(function() {
         UIModule.Toast.show('詳細資料更新完成', 'success');
     };
 
-    return { initialize, updateSingleRowInTable };
+    return { initialize };
   })();
 
   ControllerModule.initialize();
