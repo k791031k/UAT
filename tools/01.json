@@ -27,11 +27,11 @@
     "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/TRY/nGplan.js?v=%27+Date.now()"
   },
   {
-    "id": "商品查詢",
-    "description": "現售停售通路都可以查",
-    "category": "商品",
+    "id": "age",
+    "description": "保險年齡",
+    "category": "工具",
     "type": "utility",
-    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/TRY/nGplan.js?v=%27+Date.now()"
+    "action_script": "external:https://cdn.jsdelivr.net/gh/k791031k/UAT/tools/age.js?v=%27+Date.now()"
   },
   {
     "id": "A17ok06",
