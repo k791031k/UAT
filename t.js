@@ -1,1548 +1,525 @@
 javascript:(function() {
-  if (window.__PRODUCT_QUERY_TOOL__) return;
-  window.__PRODUCT_QUERY_TOOL__ = true;
-
-  // 建立容器和遮罩
-  const maskElement = document.createElement('div');
-  maskElement.className = 'pct-modal-mask';
-  maskElement.style.cssText = `
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: rgba(0, 0, 0, 0.5) !important;
-    z-index: 999999 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  `;
-  document.body.appendChild(maskElement);
-
-  const container = document.createElement('div');
-  container.className = 'pct-modal';
-  container.style.cssText = `
-    width: 1200px !important;
-    max-height: 85vh !important;
-    background: white !important;
-    border-radius: 12px !important;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    font-family: 'Segoe UI', system-ui, sans-serif !important;
-    overflow: hidden !important;
-    position: relative !important;
-  `;
-  maskElement.appendChild(container);
-
-  // Shadow DOM 設置
-  const shadow = container.attachShadow({ mode: 'open' });
-
-  // 完整的樣式表
-  const styleSheet = document.createElement('style');
-  styleSheet.textContent = `
-    * { 
-      box-sizing: border-box; 
-      margin: 0; 
-      padding: 0; 
-    }
-
-    /* 全域樣式 */
-    .pct-modal {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      font-size: 14px;
-      color: #2d3748;
-      line-height: 1.5;
-    }
-
-    /* 標題列 */
-    .pct-modal-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 16px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: grab;
-      user-select: none;
-    }
-    .pct-modal-header:active { cursor: grabbing; }
-    .pct-modal-title {
-      font-size: 18px;
-      font-weight: 600;
-    }
-    .pct-close-btn {
-      background: rgba(255, 255, 255, 0.2);
-      border: none;
-      color: white;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-    .pct-close-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: scale(1.1);
-    }
-
-    /* 內容區 */
-    .pct-modal-body {
-      flex: 1;
-      overflow: auto;
-      padding: 24px;
-    }
-
-    /* 頁腳 */
-    .pct-modal-footer {
-      padding: 16px 24px;
-      border-top: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #f8fafc;
-    }
-
-    /* Toast 提示 */
-    .pct-toast {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 12px 20px;
-      border-radius: 8px;
-      color: white;
-      font-weight: 500;
-      z-index: 1000000;
-      animation: slideDown 0.3s ease;
-      max-width: 400px;
-      text-align: center;
-    }
-    .pct-toast.success { background: #48bb78; }
-    .pct-toast.error { background: #f56565; }
-    .pct-toast.warning { background: #ed8936; }
-    .pct-toast.info { background: #4299e1; }
-
-    @keyframes slideDown {
-      from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
-      to { transform: translateX(-50%) translateY(0); opacity: 1; }
-    }
-
-    /* 進度條 */
-    .pct-progress-bar {
-      background: #e2e8f0;
-      height: 6px;
-      border-radius: 3px;
-      overflow: hidden;
-      margin-bottom: 16px;
-    }
-    .pct-progress-bar-fill {
-      background: #4299e1;
-      height: 100%;
-      transition: width 0.3s ease;
-    }
-    .pct-progress-container {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .pct-progress-text { flex: 1; font-size: 13px; color: #4a5568; }
-    .pct-abort-btn {
-      background: #f56565;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-
-    /* 表單元素 */
-    .pct-input, .pct-textarea {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid #e2e8f0;
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: inherit;
-      transition: all 0.2s;
-    }
-    .pct-input:focus, .pct-textarea:focus {
-      outline: none;
-      border-color: #4299e1;
-      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
-    }
-    .pct-textarea {
-      resize: vertical;
-      min-height: 120px;
-      font-family: 'Consolas', 'Monaco', monospace;
-    }
-
-    .pct-label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-      color: #2d3748;
-    }
-
-    .pct-error-message {
-      color: #f56565;
-      font-size: 13px;
-      margin-top: 8px;
-      display: none;
-    }
-    .pct-error-message.show { display: block; }
-
-    /* 按鈕系統 */
-    .pct-btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-      user-select: none;
-    }
-
-    .pct-btn-primary {
-      background: #4299e1;
-      color: white;
-    }
-    .pct-btn-primary:hover { background: #3182ce; }
-    .pct-btn-primary:disabled {
-      background: #a0aec0;
-      cursor: not-allowed;
-    }
-
-    .pct-btn-secondary {
-      background: #edf2f7;
-      color: #4a5568;
-      border: 1px solid #e2e8f0;
-    }
-    .pct-btn-secondary:hover { background: #e2e8f0; }
-
-    .pct-btn-success {
-      background: #48bb78;
-      color: white;
-    }
-    .pct-btn-success:hover { background: #38a169; }
-
-    .pct-btn-warning {
-      background: #ed8936;
-      color: white;
-    }
-    .pct-btn-warning:hover { background: #dd6b20; }
-
-    .pct-btn-small {
-      padding: 6px 12px;
-      font-size: 12px;
-    }
-
-    /* 查詢模式卡片 */
-    .pct-mode-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .pct-mode-card {
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 20px;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-    }
-
-    .pct-mode-card:hover {
-      border-color: #4299e1;
-      background: #f0f8ff;
-      box-shadow: 0 4px 12px rgba(66, 153, 225, 0.15);
-      transform: translateY(-2px);
-    }
-
-    .pct-mode-card.selected {
-      background: #4299e1;
-      border-color: #4299e1;
-      color: white;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(66, 153, 225, 0.3);
-    }
-
-    .pct-mode-card h3 {
-      margin-bottom: 8px;
-      font-size: 16px;
-    }
-
-    .pct-mode-card p {
-      font-size: 13px;
-      opacity: 0.8;
-      margin-bottom: 0;
-    }
-
-    /* 動態選項區 */
-    .pct-dynamic-options {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 20px;
-      margin-top: 20px;
-    }
-
-    .pct-option-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 12px;
-      margin-top: 16px;
-    }
-
-    .pct-option-card {
-      border: 2px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 12px 16px;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-      font-size: 13px;
-    }
-
-    .pct-option-card:hover {
-      border-color: #4299e1;
-      background: #f0f8ff;
-    }
-
-    .pct-option-card.selected {
-      background: #4299e1;
-      border-color: #4299e1;
-      color: white;
-    }
-
-    /* 表格樣式 */
-    .pct-table-container {
-      flex: 1;
-      overflow: auto;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      background: white;
-    }
-
-    .pct-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    .pct-table th {
-      background: #f7fafc;
-      padding: 12px 8px;
-      text-align: left;
-      font-weight: 600;
-      color: #2d3748;
-      border-bottom: 2px solid #e2e8f0;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      cursor: pointer;
-      user-select: none;
-      transition: background 0.2s;
-    }
-
-    .pct-table th:hover {
-      background: #edf2f7;
-    }
-
-    .pct-table th.sortable::after {
-      content: '';
-      margin-left: 6px;
-      opacity: 0.4;
-    }
-    .pct-table th.sort-asc::after { content: '▲'; opacity: 1; }
-    .pct-table th.sort-desc::after { content: '▼'; opacity: 1; }
-
-    .pct-table td {
-      padding: 10px 8px;
-      border-bottom: 1px solid #f1f5f9;
-      cursor: cell;
-      transition: all 0.2s;
-      position: relative;
-    }
-
-    .pct-table td:hover {
-      background: #f0f9ff;
-    }
-
-    .pct-table tr:hover {
-      background: #f0f9ff;
-    }
-
-    .pct-table tr.pct-special-row {
-      background: #fefce8;
-      border-left: 4px solid #eab308;
-    }
-
-    .pct-table tr.pct-special-row:hover {
-      background: #fef3c7;
-    }
-
-    .pct-table tr.pct-reload-row {
-      cursor: pointer;
-    }
-
-    /* 狀態標籤 */
-    .pct-status-pill {
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 500;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .pct-status-onsale { background: #c6f6d5; color: #22543d; }
-    .pct-status-stopped { background: #fed7d7; color: #742a2a; }
-    .pct-status-notyet { background: #bee3f8; color: #2c5282; }
-    .pct-status-error { background: #fef5e7; color: #c05621; }
-
-    /* 通路顯示 */
-    .pct-channels {
-      font-size: 12px;
-      line-height: 1.4;
-    }
-
-    .pct-channel-active {
-      color: #3182ce;
-      font-weight: 600;
-      margin-right: 4px;
-      cursor: help;
-    }
-
-    .pct-channel-inactive {
-      color: #e53e3e;
-      margin-right: 4px;
-      cursor: help;
-    }
-
-    .pct-channel-separator {
-      color: #718096;
-      margin: 0 6px;
-    }
-
-    /* 搜尋和篩選 */
-    .pct-search-container {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-
-    .pct-search-input {
-      flex: 1;
-      min-width: 200px;
-    }
-
-    .pct-filter-buttons {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .pct-filter-btn {
-      padding: 6px 12px;
-      border: 1px solid #e2e8f0;
-      background: white;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: all 0.2s;
-    }
-
-    .pct-filter-btn:hover {
-      border-color: #4299e1;
-      background: #f0f8ff;
-    }
-
-    .pct-filter-btn.selected {
-      background: #4299e1;
-      color: white;
-      border-color: #4299e1;
-    }
-
-    /* 分頁器 */
-    .pct-pagination {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-    }
-
-    .pct-pagination button {
-      padding: 6px 10px;
-      border: 1px solid #e2e8f0;
-      background: white;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .pct-pagination button:hover:not(:disabled) {
-      background: #f0f8ff;
-      border-color: #4299e1;
-    }
-
-    .pct-pagination button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    /* 工具提示 */
-    .pct-tooltip {
-      position: absolute;
-      background: #1a202c;
-      color: white;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      z-index: 1000;
-      pointer-events: none;
-      white-space: nowrap;
-      max-width: 300px;
-      word-wrap: break-word;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    .pct-tooltip::before {
-      content: '';
-      position: absolute;
-      top: -4px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-left: 4px solid transparent;
-      border-right: 4px solid transparent;
-      border-bottom: 4px solid #1a202c;
-    }
-
-    /* 等寬字體 */
-    .pct-monospace {
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    }
-
-    /* 空狀態 */
-    .pct-empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #718096;
-    }
-
-    .pct-empty-state h3 {
-      font-size: 18px;
-      color: #2d3748;
-      margin-bottom: 12px;
-    }
-
-    .pct-empty-state p {
-      margin-bottom: 20px;
-      line-height: 1.6;
-    }
-
-    /* 隱藏滾動條 */
-    .pct-table-container::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    .pct-table-container::-webkit-scrollbar-track {
-      background: #f1f5f9;
-    }
-
-    .pct-table-container::-webkit-scrollbar-thumb {
-      background: #cbd5e0;
-      border-radius: 4px;
-    }
-
-    .pct-table-container::-webkit-scrollbar-thumb:hover {
-      background: #a0aec0;
-    }
-  `;
-  shadow.appendChild(styleSheet);
-
-  // 狀態管理
-  const state = {
-    view: 'token', // token, query, result, loading
-    token: '',
-    autoDetected: false,
-    selectedMode: '',
-    selectedOptions: {},
-    data: [],
-    filteredData: [],
-    currentPage: 1,
-    pageSize: 20,
-    totalPages: 1,
-    searchKeyword: '',
-    sortField: '',
-    sortDirection: '',
-    specialOnly: false,
-    onePageMode: false,
-    loading: false,
-    progress: { current: 0, total: 0, text: '' }
-  };
-
-  // 拖拽功能
-  let isDragging = false;
-  let dragOffset = { x: 0, y: 0 };
-
-  // 工具函式
-  const utils = {
-    showToast(message, type = 'info') {
-      const existing = shadow.querySelector('.pct-toast');
-      if (existing) existing.remove();
-
-      const toast = document.createElement('div');
-      toast.className = `pct-toast ${type}`;
-      toast.textContent = message;
-      shadow.appendChild(toast);
-
-      setTimeout(() => toast.remove(), 3000);
+  'use strict';
+
+  // 清理舊工具實例，確保環境乾淨
+  (() => {
+    ['planCodeQueryToolInstance', 'planCodeToolStyle', 'pctModalMask'].forEach(id => document.getElementById(id)?.remove());
+    document.querySelectorAll('.pct-toast').forEach(el => el.remove());
+  })();
+
+  /**
+   * 配置管理模組
+   * 儲存所有靜態設定與常數。
+   */
+  const ConfigModule = Object.freeze({
+    TOOL_ID: 'planCodeQueryToolInstance',
+    STYLE_ID: 'planCodeToolStyle',
+    VERSION: '20.1.0-SilentPreload',
+    QUERY_MODES: {
+      PLAN_CODE: 'planCode',
+      PLAN_NAME: 'planCodeName',
+      MASTER_CLASSIFIED: 'masterClassified',
+      CHANNEL_CLASSIFIED: 'channelClassified'
     },
-
-    createTooltip(text, x, y) {
-      const existing = shadow.querySelector('.pct-tooltip');
-      if (existing) existing.remove();
-
-      const tooltip = document.createElement('div');
-      tooltip.className = 'pct-tooltip';
-      tooltip.textContent = text;
-      tooltip.style.left = x + 'px';
-      tooltip.style.top = (y - 35) + 'px';
-      shadow.appendChild(tooltip);
+    MASTER_STATUS_TYPES: {
+      IN_SALE: '現售',
+      STOPPED: '停售',
+      PENDING: '尚未開賣',
+      ABNORMAL: '日期異常'
     },
-
-    hideTooltip() {
-      const tooltip = shadow.querySelector('.pct-tooltip');
-      if (tooltip) tooltip.remove();
+    API_ENDPOINTS: {
+      UAT: 'https://euisv-uat.apps.tocp4.kgilife.com.tw/euisw/euisbq/api',
+      PROD: 'https://euisv.apps.ocp4.kgilife.com.tw/euisw/euisbq/api'
     },
+    FIELD_MAPS: {
+      CURRENCY: {'1':'TWD','2':'USD','3':'AUD','4':'CNT','5':'USD_OIU','6':'EUR','7':'JPY'},
+      UNIT: {'A1':'元','A3':'仟元','A4':'萬元','B1':'計畫','C1':'單位'},
+      COVERAGE_TYPE: {'M':'主約','R':'附約'},
+      CHANNELS: ['AG','BR','BK','WS','EC']
+    },
+    DEFAULT_QUERY_PARAMS: {
+      PAGE_SIZE_MASTER: 10000,
+      PAGE_SIZE_CHANNEL: 5000,
+      PAGE_SIZE_DETAIL: 50,
+      PAGE_SIZE_TABLE: 50
+    },
+    DEBOUNCE_DELAY: { SEARCH: 1000 },
+    BATCH_SIZES: { DETAIL_LOAD: 20 }
+  });
 
-    copyToClipboard(text) {
-      navigator.clipboard.writeText(text).then(() => {
-        this.showToast('已複製', 'success');
-      }).catch(() => {
-        this.showToast('複製失敗', 'error');
+  /**
+   * 狀態管理模組
+   * 新增 preloadPromise 來追蹤背景載入的狀態。
+   */
+  const StateModule = (() => {
+    const state = {
+      env: (window.location.host.toLowerCase().includes('uat') || window.location.host.toLowerCase().includes('test')) ? 'UAT' : 'PROD',
+      apiBase: '',
+      token: '',
+      tokenCheckEnabled: true,
+      
+      // --- 【修改】預載狀態管理 ---
+      isPreloading: false,
+      preloadPromise: null, // 用於儲存預載 Promise 物件
+      
+      productMap: new Map(),
+      channelMap: new Map(),
+
+      lastQuery: {
+        queryMode: '',
+        queryInput: '',
+        masterStatusSelection: new Set(),
+        channelStatusSelection: '',
+        channelSelection: new Set(),
+      },
+      
+      currentResults: [],
+      pageNo: 1,
+      pageSize: ConfigModule.DEFAULT_QUERY_PARAMS.PAGE_SIZE_TABLE,
+      isFullView: false,
+      filterSpecial: false,
+      searchKeyword: '',
+      sortKey: 'no',
+      sortAsc: true,
+      activeFrontendFilters: new Set(),
+      
+      cacheDetail: new Map(),
+      
+      currentQueryController: null,
+      searchDebounceTimer: null
+    };
+    
+    state.apiBase = state.env === 'PROD' ? ConfigModule.API_ENDPOINTS.PROD : ConfigModule.API_ENDPOINTS.UAT;
+    
+    const get = () => state;
+    const set = (newState) => { Object.assign(state, newState); };
+    
+    const resetQueryState = () => {
+      set({
+        currentResults: [],
+        pageNo: 1,
+        filterSpecial: false,
+        searchKeyword: '',
+        isFullView: false,
+        activeFrontendFilters: new Set()
       });
-    },
+    };
+    
+    const backupQuery = () => {
+        const state = get();
+        const inputEl = document.getElementById('pct-query-input');
+        const currentQuery = {
+            queryMode: state.queryMode,
+            queryInput: inputEl ? inputEl.value.trim() : '',
+            masterStatusSelection: state.masterStatusSelection,
+            channelStatusSelection: state.channelStatusSelection,
+            channelSelection: state.channelSelection,
+        };
+        set({ lastQuery: currentQuery });
+    };
+    
+    return { get, set, resetQueryState, backupQuery };
+  })();
 
-    extractToken() {
-      const keys = ['SSO-TOKEN', 'euisToken'];
-      for (const key of keys) {
-        const token = localStorage.getItem(key) || sessionStorage.getItem(key);
-        if (token) return { token, source: key };
+  /**
+   * 工具函式模組
+   */
+  const UtilsModule = (() => {
+    const escapeHtml = t => typeof t === 'string' ? t.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])) : t;
+    const formatToday = () => { const d = new Date(); return `${d.getFullYear()}${('0'+(d.getMonth()+1)).slice(-2)}${('0'+d.getDate()).slice(-2)}`; };
+    const formatDateForUI = dt => !dt ? '' : String(dt).split(' ')[0].replace(/-/g, '');
+    const formatDateForComparison = dt => { if (!dt) return ''; const p = String(dt).split(' ')[0]; return /^\d{8}$/.test(p) ? p.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') : p; };
+    const getSaleStatus = (todayStr, saleStartStr, saleEndStr) => {
+        if (!saleStartStr || !saleEndStr) return ConfigModule.MASTER_STATUS_TYPES.ABNORMAL;
+        const today = new Date(formatDateForComparison(todayStr));
+        const sS = new Date(formatDateForComparison(saleStartStr));
+        const sE = new Date(formatDateForComparison(saleEndStr));
+        if (isNaN(today.getTime()) || isNaN(sS.getTime()) || isNaN(sE.getTime())) { return ConfigModule.MASTER_STATUS_TYPES.ABNORMAL; }
+        if (sS.getTime() > sE.getTime()) return ConfigModule.MASTER_STATUS_TYPES.ABNORMAL;
+        if (today < sS) return ConfigModule.MASTER_STATUS_TYPES.PENDING;
+        if (today > sE) return ConfigModule.MASTER_STATUS_TYPES.STOPPED;
+        return ConfigModule.MASTER_STATUS_TYPES.IN_SALE;
+    };
+    const checkSpecialStatus = item => {
+        const reasons = [];
+        const { mainStatus, channels = [], rawSaleEndDate, rawSaleStartDate, saleEndDate, saleStartDate } = item;
+        if (mainStatus === ConfigModule.MASTER_STATUS_TYPES.STOPPED && channels.some(c => c.status === ConfigModule.MASTER_STATUS_TYPES.IN_SALE)) { reasons.push('主約已停售，但部分通路仍在售。'); }
+        if (mainStatus === ConfigModule.MASTER_STATUS_TYPES.IN_SALE && channels.length > 0 && channels.every(c => c.status !== ConfigModule.MASTER_STATUS_TYPES.IN_SALE)) { reasons.push('主約為現售，但所有通路皆非現售狀態。'); }
+        const mainEndDate = new Date(formatDateForComparison(rawSaleEndDate));
+        if (!isNaN(mainEndDate.getTime())) { channels.forEach(c => { const channelEndDate = new Date(formatDateForComparison(c.rawEnd)); if (!isNaN(channelEndDate.getTime()) && channelEndDate > mainEndDate) { reasons.push(`通路[${c.channel}]迄日(${c.saleEndDate})晚於主約迄日(${saleEndDate})。`); } }); }
+        const mainStartDate = new Date(formatDateForComparison(rawSaleStartDate));
+        if (!isNaN(mainStartDate.getTime())) { channels.forEach(c => { const channelStartDate = new Date(formatDateForComparison(c.rawStart)); if (!isNaN(channelStartDate.getTime()) && channelStartDate < mainStartDate) { reasons.push(`通路[${c.channel}]起日(${c.saleStartDate})早於主約起日(${saleStartDate})。`); } }); }
+        if (mainStatus === ConfigModule.MASTER_STATUS_TYPES.ABNORMAL) { reasons.push('主約本身的銷售起迄日期異常(起日>迄日)。'); }
+        return reasons.join('\n');
+    };
+    const channelUIToAPI = c => c === 'BK' ? 'OT' : c;
+    const channelAPIToUI = c => c === 'OT' ? 'BK' : c;
+    const currencyConvert = v => ConfigModule.FIELD_MAPS.CURRENCY[String(v)] || v || '';
+    const unitConvert = v => ConfigModule.FIELD_MAPS.UNIT[String(v)] || v || '';
+    const coverageTypeConvert = v => ConfigModule.FIELD_MAPS.COVERAGE_TYPE[String(v)] || v || '';
+    const copyTextToClipboard = (t, showToast) => {
+      if (!navigator.clipboard) { const e = document.createElement('textarea'); e.value = t; document.body.appendChild(e); e.select(); document.execCommand('copy'); document.body.removeChild(e); showToast('已複製 (舊版)', 'success');
+      } else { navigator.clipboard.writeText(t).then(() => showToast('已複製', 'success')).catch(() => showToast('複製失敗', 'error')); }
+    };
+    const splitInput = i => i.trim().split(/[\s,;，；、|\n\r]+/).filter(Boolean);
+    const toHalfWidthUpperCase = str => str.replace(/[\uff01-\uff5e]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0)).toUpperCase();
+    return { escapeHtml, formatToday, formatDateForUI, getSaleStatus, checkSpecialStatus, channelUIToAPI, channelAPIToUI, currencyConvert, unitConvert, coverageTypeConvert, copyTextToClipboard, splitInput, toHalfWidthUpperCase };
+  })();
+  
+  /**
+   * UI 介面管理模組
+   */
+  const UIModule = (() => {
+    const createElement = (tag, options = {}) => { const el = document.createElement(tag); Object.entries(options).forEach(([key, value]) => { if (key === 'children' && Array.isArray(value)) { value.forEach(child => child && el.appendChild(child)); } else if (key === 'dataset' && typeof value === 'object') { Object.assign(el.dataset, value); } else if (key === 'style' && typeof value === 'object') { Object.assign(el.style, value); } else { el[key] = value; } }); return el; };
+    const injectStyle = () => {
+      const styleContent = `
+        :root{--primary-color:#4A90E2;--primary-dark-color:#357ABD;--secondary-color:#6C757D;--secondary-dark-color:#5A6268;--success-color:#5CB85C;--success-dark-color:#4CAE4C;--error-color:#D9534F;--error-dark-color:#C9302C;--warning-color:#F0AD4E;--warning-dark-color:#EC971F;--info-color:#5BC0DE;--info-dark-color:#46B8DA;--background-light:#F8F8F8;--surface-color:#FFFFFF;--border-color:#E0E0E0;--text-color-dark:#1a1a1a;--text-color-light:#333333;--box-shadow-light:rgba(0,0,0,0.08);--box-shadow-medium:rgba(0,0,0,0.15);--box-shadow-strong:rgba(0,0,0,0.3);--border-radius-base:6px;--border-radius-lg:10px;--transition-speed:0.25s;}
+        .pct-modal-mask{position:fixed;z-index:2147483646;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.25);opacity:0;transition:opacity var(--transition-speed) ease-out;} .pct-modal-mask.show{opacity:1;}
+        .pct-modal{font-family:'Microsoft JhengHei','Segoe UI','Roboto','Helvetica Neue',sans-serif;background:var(--surface-color);border-radius:var(--border-radius-lg);box-shadow:0 4px 24px var(--box-shadow-strong);padding:0;max-width:95vw;position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-20px);opacity:0;z-index:2147483647;transition:opacity var(--transition-speed) cubic-bezier(0.25,0.8,0.25,1),transform var(--transition-speed) cubic-bezier(0.25,0.8,0.25,1);display:flex;flex-direction:column;}
+        .pct-modal[data-size="query"]{width:520px;height:auto;max-height:90vh;} .pct-modal[data-size="results"]{width:1050px;height:80vh;max-height:800px;}
+        .pct-modal.show{opacity:1;transform:translateX(-50%) translateY(0);} .pct-modal.dragging{transition:none;}
+        .pct-modal-header{padding:16px 50px 16px 20px;line-height:1;font-size:20px;font-weight:bold;border-bottom:1px solid var(--border-color);color:var(--text-color-dark);cursor:grab;position:relative;}
+        .pct-modal.pct-view-results .pct-modal-header{padding-top:12px;padding-bottom:12px;line-height:normal;}
+        .pct-modal-header.dragging{cursor:grabbing;}
+        .pct-modal-close-btn{position:absolute;top:50%;right:15px;transform:translateY(-50%);background:transparent;border:none;font-size:24px;line-height:1;color:var(--secondary-color);cursor:pointer;padding:5px;width:34px;height:34px;border-radius:50%;transition:background-color .2s, color .2s;display:flex;align-items:center;justify-content:center;}
+        .pct-modal-close-btn:hover{background-color:var(--background-light);color:var(--text-color-dark);}
+        .pct-modal-body{padding:16px 20px 8px 20px;flex-grow:1;overflow-y:auto;min-height:50px;}
+        .pct-modal-footer{padding:12px 20px 16px 20px;border-top:1px solid var(--border-color);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;min-height:60px;}
+        .pct-modal-footer-left,.pct-modal-footer-center,.pct-modal-footer-right{display:flex;gap:10px;align-items:center;}
+        .pct-btn{display:inline-flex;align-items:center;justify-content:center;margin:0;padding:8px 18px;font-size:15px;border-radius:var(--border-radius-base);border:1px solid transparent;background:var(--primary-color);color:#fff;cursor:pointer;transition:all var(--transition-speed);font-weight:600;box-shadow:0 2px 5px var(--box-shadow-light);white-space:nowrap;}
+        .pct-btn:hover{background:var(--primary-dark-color);transform:translateY(-1px) scale(1.01);box-shadow:0 4px 8px var(--box-shadow-medium);}
+        .pct-btn:disabled{background:#CED4DA;color:#A0A0A0;cursor:not-allowed;transform:none;box-shadow:none;}
+        .pct-btn-secondary{background:var(--secondary-color);} .pct-btn-secondary:hover{background:var(--secondary-dark-color);}
+        .pct-btn.pct-btn-outline{background-color:transparent;border-color:var(--secondary-color);color:var(--secondary-color);}
+        .pct-btn.pct-btn-outline:hover{background-color:var(--background-light);color:var(--text-color-dark);}
+        .pct-btn.pct-btn-outline.pct-btn-primary{background-color:var(--primary-color);color:#fff;}
+        .pct-filter-btn{font-size:14px;padding:5px 12px;background:var(--warning-color);color:var(--text-color-dark);border:1px solid var(--warning-dark-color);border-radius:5px;cursor:pointer;font-weight:600;}
+        .pct-filter-btn.active{background:var(--warning-dark-color);color:white;}
+        .pct-input{width:100%;font-size:16px;padding:9px 12px;border-radius:5px;border:1px solid var(--border-color);box-sizing:border-box;margin-top:5px;}
+        .pct-input:focus{border-color:var(--primary-color);box-shadow:0 0 0 2px rgba(74,144,226,0.2);outline:none;}
+        .pct-error{color:var(--error-color);font-size:13px;margin:8px 0 0 0;display:block;min-height:1em;}
+        .pct-form-group{margin-bottom:20px;}
+        .pct-mode-card-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:15px;}
+        .pct-mode-card,.pct-sub-option,.pct-channel-option{background:var(--background-light);border:1px solid var(--border-color);border-radius:var(--border-radius-base);padding:12px;text-align:center;cursor:pointer;transition:all .2s ease-out;font-weight:500;font-size:14px;display:flex;align-items:center;justify-content:center;min-height:45px;}
+        .pct-mode-card:hover,.pct-sub-option:hover,.pct-channel-option:hover{transform:translateY(-2px);box-shadow:0 4px 8px var(--box-shadow-medium);background-color:#f0f7ff;border-color:var(--primary-color);}
+        .pct-mode-card.selected,.pct-sub-option.selected,.pct-channel-option.selected{background:var(--primary-color);color:white;border-color:var(--primary-color);font-weight:bold;}
+        .pct-sub-option-grid,.pct-channel-option-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+        .pct-table-wrap{flex:1;overflow:auto;margin:15px 0;border:1px solid var(--border-color);border-radius:var(--border-radius-base);min-height:200px;}
+        .pct-table{border-collapse:collapse;width:100%;font-size:13px;background:var(--surface-color);table-layout:fixed;min-width:1000px;}
+        .pct-table th,.pct-table td{border:1px solid #ddd;padding:6px 4px;vertical-align:top;word-wrap:break-word;}
+        .pct-table th{background:#f8f8f8;position:sticky;top:0;z-index:1;cursor:pointer;text-align:center;font-weight:bold;font-size:12px;}
+        .pct-table th:nth-child(1){width:4%;} .pct-table th:nth-child(2){width:6%;} .pct-table th:nth-child(3){width:18%;} .pct-table th:nth-child(4){width:5%;} .pct-table th:nth-child(5){width:5%;} .pct-table th:nth-child(6){width:4%;} .pct-table th:nth-child(7){width:7%;} .pct-table th:nth-child(8){width:7%;} .pct-table th:nth-child(9){width:7%;} .pct-table th:nth-child(10){width:15%;} .pct-table th:nth-child(11){width:22%;}
+        .pct-table th[data-key]{position:relative;padding-right:20px;}
+        .pct-table th[data-key]::after{content:'';position:absolute;right:8px;top:50%;transform:translateY(-50%);opacity:0.3;font-size:12px;transition:opacity 0.2s;border:4px solid transparent;}
+        .pct-table th[data-key].sort-asc::after{border-bottom-color:var(--primary-color);opacity:1;}
+        .pct-table th[data-key].sort-desc::after{border-top-color:var(--primary-color);opacity:1;}
+        .pct-table tr:hover{background:#e3f2fd;}
+        .pct-table tr.special-row{background:#fffde7;border-left:4px solid var(--warning-color);cursor:help;}
+        .pct-table td.clickable-cell{cursor:cell;}
+        .pct-channel-insale{color:var(--primary-color);font-weight:bold;}
+        .pct-channel-offsale{color:var(--error-color);}
+        .pct-channel-separator{margin:0 4px;color:#ccc;}
+        .pct-toast{position:fixed;left:50%;top:30px;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;padding:10px 22px;border-radius:var(--border-radius-base);font-size:16px;z-index:2147483647;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;box-shadow:0 4px 12px rgba(0,0,0,0.2);white-space:nowrap;}
+        .pct-toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+        .pct-toast.success{background:var(--success-color);} .pct-toast.error{background:var(--error-color);} .pct-toast.warning{background:var(--warning-color);color:var(--text-color-dark);} .pct-toast.info{background:var(--info-color);}
+        .pct-confirm-toast{display:flex;align-items:center;gap:15px;} .pct-confirm-toast .pct-btn{padding:5px 10px;font-size:14px;}
+        .pct-pagination{display:flex;justify-content:center;align-items:center;gap:10px;} .pct-pagination-info{font-size:14px;color:var(--text-color-light);}
+        .load-details-btn{padding:2px 8px;border:1px solid #ddd;background:#f9f9f9;border-radius:3px;cursor:pointer;font-size:11px;}
+        .load-details-btn:disabled{cursor:not-allowed;background:#eee;}
+        .load-details-error{color:var(--error-color);font-size:11px;cursor:help;margin-left:4px;}
+      `;
+      const s = createElement('style', { id: ConfigModule.STYLE_ID, textContent: styleContent });
+      document.head.appendChild(s);
+    };
+    const Toast = {
+      show: (msg, type = 'info', duration = 3000) => { let e = document.getElementById('pct-toast'); if (e) e.remove(); e = createElement('div', { id: 'pct-toast', className: `pct-toast ${type}`, textContent: msg }); document.body.appendChild(e); requestAnimationFrame(() => e.classList.add('show')); if (duration > 0) { setTimeout(() => { e.classList.remove('show'); e.addEventListener('transitionend', () => e.remove(), { once: true }); }, duration); } },
+      confirm: (msg, onConfirm) => { Toast.show('', 'warning', 0); const toastEl = document.getElementById('pct-toast'); toastEl.innerHTML = ''; toastEl.appendChild(createElement('div', { className: 'pct-confirm-toast', children: [createElement('span', { textContent: msg }), createElement('button', { id: 'pct-confirm-ok', className: 'pct-btn', textContent: '確認', onclick: () => { Toast.close(); onConfirm(true); } }), createElement('button', { id: 'pct-confirm-cancel', className: 'pct-btn pct-btn-secondary', textContent: '取消', onclick: () => { Toast.close(); onConfirm(false); } })] })); },
+      close: () => { document.getElementById('pct-toast')?.remove(); }
+    };
+    const Modal = {
+      close: () => { document.getElementById(ConfigModule.TOOL_ID)?.remove(); document.getElementById('pctModalMask')?.remove(); StateModule.get().currentQueryController?.abort(); },
+      show: (modalContent, onOpen) => { Modal.close(); const mask = createElement('div', { id: 'pctModalMask', className: 'pct-modal-mask' }); document.body.appendChild(mask); const modal = createElement('div', { id: ConfigModule.TOOL_ID, className: 'pct-modal', children: modalContent }); document.body.appendChild(modal); setTimeout(() => { mask.classList.add('show'); modal.classList.add('show'); }, 10); modal.querySelector('.pct-modal-header')?.addEventListener('mousedown', EventModule.dragMouseDown); modal.querySelector('.pct-modal-close-btn')?.addEventListener('click', Modal.close); if (onOpen) setTimeout(() => onOpen(modal), 50); }
+    };
+    const showError = (msg, elId) => { const el = document.getElementById(elId); if (el) { el.textContent = msg; el.style.display = 'block'; } else { Toast.show(msg, 'error'); } };
+    const hideError = (elId) => { const el = document.getElementById(elId); if (el) { el.style.display = 'none'; el.textContent = ''; } };
+    return { injectStyle, Toast, Modal, showError, hideError, createElement };
+  })();
+
+  /**
+   * 事件管理模組
+   */
+  const EventModule = (() => {
+    const dragState = { isDragging: false, initialX: 0, initialY: 0, modal: null };
+    const dragMouseDown = e => { const modal = document.getElementById(ConfigModule.TOOL_ID); if (!modal || e.target.classList.contains('pct-modal-close-btn')) return; dragState.isDragging = true; dragState.modal = modal; dragState.initialX = e.clientX - modal.getBoundingClientRect().left; dragState.initialY = e.clientY - modal.getBoundingClientRect().top; modal.classList.add('dragging'); e.currentTarget.classList.add('dragging'); document.addEventListener('mousemove', elementDrag); document.addEventListener('mouseup', closeDragElement); e.preventDefault(); };
+    const elementDrag = e => { if (!dragState.isDragging) return; const { modal, initialX, initialY } = dragState; const newX = e.clientX - initialX; const newY = e.clientY - initialY; modal.style.left = `${newX + modal.offsetWidth / 2}px`; modal.style.top = `${newY}px`; e.preventDefault(); };
+    const closeDragElement = () => { if (!dragState.isDragging) return; dragState.isDragging = false; const { modal } = dragState; if (modal) { modal.classList.remove('dragging'); modal.querySelector('.pct-modal-header')?.classList.remove('dragging'); } document.removeEventListener('mousemove', elementDrag); document.removeEventListener('mouseup', closeDragElement); };
+    const handleEscKey = (e) => { if (e.key === 'Escape') { UIModule.Modal.close(); document.removeEventListener('keydown', handleEscKey); } };
+    const setupGlobalKeyListener = () => { document.removeEventListener('keydown', handleEscKey); document.addEventListener('keydown', handleEscKey); };
+    const autoFormatInput = (event) => { const input = event.target; const { value, selectionStart, selectionEnd } = input; input.value = UtilsModule.toHalfWidthUpperCase(value); input.setSelectionRange(selectionStart, selectionEnd); };
+    return { dragMouseDown, setupGlobalKeyListener, autoFormatInput };
+  })();
+
+  /**
+   * API 服務模組
+   */
+  const ApiModule = (() => {
+    const callApi = async (endpoint, params, signal) => { const { apiBase, token } = StateModule.get(); const headers = { 'Content-Type': 'application/json' }; if (token) { headers['SSO-TOKEN'] = token; } const response = await fetch(`${apiBase}${endpoint}`, { method: 'POST', headers: headers, body: JSON.stringify(params), signal: signal }); if (!response.ok) { let errorText = await response.text(); try { const errorJson = JSON.parse(errorText); errorText = errorJson.message || errorJson.error || errorText; } catch (e) { /* Ignore */ } throw new Error(`API 請求失敗: ${errorText}`); } return response.json(); };
+    const verifyToken = async (token) => { try { const tempState = StateModule.get(); const res = await fetch(`${tempState.apiBase}/planCodeController/query`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'SSO-TOKEN': token }, body: JSON.stringify({ planCode: '5105', currentPage: 1, pageSize: 1 }) }); const data = await res.json(); return res.ok && (typeof data.total !== 'undefined' || typeof data.records !== 'undefined'); } catch (e) { return false; } };
+    return { callApi, verifyToken };
+  })();
+
+  /**
+   * 資料處理模組
+   */
+  const DataModule = (() => {
+    const fetchAllBaseData = async (signal) => {
+        const fetchProducts = ApiModule.callApi('/planCodeController/query', { currentPage: 1, pageSize: ConfigModule.DEFAULT_QUERY_PARAMS.PAGE_SIZE_MASTER }, signal);
+        const fetchChannels = ApiModule.callApi('/planCodeSaleDateController/query', { planCode: "", channel: "", saleEndDate: "", pageIndex: 1, size: ConfigModule.DEFAULT_QUERY_PARAMS.PAGE_SIZE_CHANNEL }, signal);
+        const [productRes, channelRes] = await Promise.all([fetchProducts, fetchChannels]);
+        const productMap = buildProductMap(productRes.records || []);
+        const channelMap = buildChannelMap(channelRes.planCodeSaleDates?.records || []);
+        StateModule.set({ productMap, channelMap });
+    };
+    const buildProductMap = (records) => { const map = new Map(); const today = UtilsModule.formatToday(); records.forEach(item => { map.set(item.planCode, { planCode: String(item.planCode || '-'), shortName: item.shortName || item.planName || '-', currency: UtilsModule.currencyConvert(item.currency || item.cur), unit: UtilsModule.unitConvert(item.reportInsuranceAmountUnit || item.insuranceAmountUnit), coverageType: UtilsModule.coverageTypeConvert(item.coverageType || item.type), saleStartDate: UtilsModule.formatDateForUI(item.saleStartDate), rawSaleStartDate: item.saleStartDate, saleEndDate: UtilsModule.formatDateForUI(item.saleEndDate), rawSaleEndDate: item.saleEndDate, mainStatus: UtilsModule.getSaleStatus(today, item.saleStartDate, item.saleEndDate), }); }); return map; };
+    const buildChannelMap = (records) => { const map = new Map(); const today = UtilsModule.formatToday(); records.forEach(r => { const planCode = r.planCode; if (!map.has(planCode)) { map.set(planCode, []); } map.get(planCode).push({ channel: UtilsModule.channelAPIToUI(r.channel), saleStartDate: UtilsModule.formatDateForUI(r.saleStartDate), saleEndDate: UtilsModule.formatDateForUI(r.saleEndDate), rawStart: r.saleStartDate, rawEnd: r.saleEndDate, status: UtilsModule.getSaleStatus(today, r.saleStartDate, r.saleEndDate) }); }); return map; };
+    const queryLocalData = () => {
+        const state = StateModule.get();
+        const { productMap, channelMap, lastQuery } = state;
+        let results = [];
+        switch (lastQuery.queryMode) {
+            case ConfigModule.QUERY_MODES.PLAN_CODE:
+                UtilsModule.splitInput(lastQuery.queryInput).forEach(code => { productMap.has(code) ? results.push(productMap.get(code)) : results.push({ planCode: code, _isErrorRow: true, _apiStatus: '查無此代號主檔' }); });
+                break;
+            case ConfigModule.QUERY_MODES.PLAN_NAME:
+                const nameKeyword = lastQuery.queryInput.toLowerCase();
+                productMap.forEach(p => { if (p.shortName.toLowerCase().includes(nameKeyword)) results.push(p); });
+                break;
+            case ConfigModule.QUERY_MODES.MASTER_CLASSIFIED:
+                productMap.forEach(p => { if (lastQuery.masterStatusSelection.has(p.mainStatus)) results.push(p); });
+                break;
+            case ConfigModule.QUERY_MODES.CHANNEL_CLASSIFIED:
+                const targetChannels = Array.from(lastQuery.channelSelection);
+                const targetStatus = lastQuery.channelStatusSelection;
+                productMap.forEach(p => { const productChannels = channelMap.get(p.planCode) || []; const hasMatch = productChannels.some(ch => { const channelMatch = targetChannels.length === 0 || targetChannels.includes(ch.channel); if (!channelMatch) return false; const isInSale = ch.status === ConfigModule.MASTER_STATUS_TYPES.IN_SALE; return (targetStatus === '現售' && isInSale) || (targetStatus === '停售' && !isInSale); }); if (hasMatch) results.push(p); });
+                break;
+        }
+        return enrichData(results);
+    };
+    const enrichData = (data) => { const { channelMap } = StateModule.get(); return data.map((item, index) => { if (item._isErrorRow) return { no: index + 1, planCode: String(item.planCode), shortName: '-', saleEndDate: `查詢狀態: ${UtilsModule.escapeHtml(item._apiStatus)}`, mainStatus: '-', polpln: '...', channels: [], specialReason: '', _isErrorRow: true, }; const channels = channelMap.get(item.planCode) || []; const enrichedItem = { ...item, no: index + 1, polpln: '...', channels: channels, _loadingDetails: true, }; enrichedItem.specialReason = UtilsModule.checkSpecialStatus(enrichedItem); return enrichedItem; }); };
+    const getPolplnData = async (planCode, signal) => {
+        const { cacheDetail } = StateModule.get();
+        if (cacheDetail.has(planCode)) return cacheDetail.get(planCode);
+        const extractPolpln = (s) => { if (!s || typeof s !== 'string') return ""; let t = s.trim(); if (t.endsWith("%%")) t = t.substring(0, t.length - 2); return t.replace(/^\d+/, "").replace(/\d+$/, "").trim() || ""; };
+        const detail = await ApiModule.callApi('/planCodeController/queryDetail', { planCode, currentPage: 1, pageSize: ConfigModule.DEFAULT_QUERY_PARAMS.PAGE_SIZE_DETAIL }, signal);
+        const records = (detail.records || []).map(r => extractPolpln(r.polpln)).filter(Boolean);
+        if (records.length === 0) { cacheDetail.set(planCode, "無資料"); return "無資料"; }
+        const first = records[0];
+        const result = records.every(p => p === first) ? first : "-";
+        cacheDetail.set(planCode, result);
+        return result;
+    };
+    const sortData = (data, key, asc) => { if (!key || key === 'no') return data; return [...data].sort((a, b) => { let valA = a[key], valB = b[key]; if (key.toLowerCase().includes('date')) { valA = a['raw' + key.charAt(0).toUpperCase() + key.slice(1)]; valB = b['raw' + key.charAt(0).toUpperCase() + key.slice(1)]; } if (valA < valB) return asc ? -1 : 1; if (valA > valB) return asc ? 1 : -1; return 0; }); };
+    return { fetchAllBaseData, queryLocalData, getPolplnData, sortData };
+  })();
+
+  /**
+   * 主控制器模組
+   */
+  const ControllerModule = (() => {
+    
+    const initialize = async () => {
+      UIModule.injectStyle();
+      EventModule.setupGlobalKeyListener();
+      const storedToken = [localStorage.getItem('SSO-TOKEN'), sessionStorage.getItem('SSO-TOKEN'), localStorage.getItem('euisToken'), sessionStorage.getItem('euisToken')].find(t => t && t.trim() !== 'null' && t.trim() !== '');
+      if (storedToken) {
+        StateModule.set({ token: storedToken, tokenCheckEnabled: true });
+        UIModule.Toast.show('正在自動驗證 Token...', 'info', 2000);
+        if (await ApiModule.verifyToken(storedToken)) {
+          UIModule.Toast.show('Token 驗證成功', 'success');
+          proceedToQueryScreen();
+        } else {
+          UIModule.Toast.show('自動驗證失敗，請手動輸入', 'warning');
+          StateModule.set({ token: '' });
+          showTokenDialog();
+        }
+      } else {
+        showTokenDialog();
       }
-      return null;
-    },
+    };
+    
+    // 【修改】新的初始化流程
+    const proceedToQueryScreen = () => {
+        // 1. 立即顯示查詢畫面給使用者
+        showQueryDialog();
+        // 2. 在背景開始執行「無感」的資料預載
+        startSilentPreload();
+    };
 
-    formatDate(dateStr) {
-      if (!dateStr) return '';
-      const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-      return match ? `${match[1]}${match[2]}${match[3]}` : dateStr;
-    },
+    const startSilentPreload = () => {
+        const controller = new AbortController();
+        StateModule.set({ currentQueryController: controller, isPreloading: true });
 
-    getSaleStatus(startDate, endDate) {
-      if (!startDate || !endDate) return 'error';
-      const now = new Date();
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-
-      if (start > end) return 'error';
-      if (now < start) return 'notyet';
-      if (now > end) return 'stopped';
-      return 'onsale';
-    },
-
-    updateProgress(current, total, text) {
-      state.progress = { current, total, text };
-      const container = shadow.querySelector('.pct-progress-container');
-      if (container) {
-        const progressBar = container.querySelector('.pct-progress-bar-fill');
-        const progressText = container.querySelector('.pct-progress-text');
-        if (progressBar) progressBar.style.width = `${(current / total) * 100}%`;
-        if (progressText) progressText.textContent = text;
-      }
-    }
-  };
-
-  // 渲染引擎
-  const renderer = {
-    render() {
-      const content = this.getContent();
-      shadow.innerHTML = '';
-      shadow.appendChild(styleSheet);
-      
-      const wrapper = document.createElement('div');
-      wrapper.innerHTML = content;
-      shadow.appendChild(wrapper);
-      
-      this.bindEvents();
-    },
-
-    getContent() {
-      const header = `
-        <div class="pct-modal-header" id="modal-header">
-          <div class="pct-modal-title">${this.getTitle()}</div>
-          <button class="pct-close-btn" onclick="closeTool()">×</button>
-        </div>
-      `;
-
-      const footer = this.getFooter();
-      const body = this.getBody();
-
-      return `
-        <div class="pct-modal">
-          ${header}
-          <div class="pct-modal-body">
-            ${body}
-          </div>
-          ${footer ? `<div class="pct-modal-footer">${footer}</div>` : ''}
-        </div>
-      `;
-    },
-
-    getTitle() {
-      switch (state.view) {
-        case 'token': return '設定 Token';
-        case 'query': return '選擇查詢條件';
-        case 'result': return `查詢結果 (${state.filteredData.length || state.data.length} 筆)`;
-        default: return '商品查詢小工具';
-      }
-    },
-
-    getBody() {
-      switch (state.view) {
-        case 'token': return this.renderTokenView();
-        case 'query': return this.renderQueryView();
-        case 'result': return this.renderResultView();
-        default: return '<div class="pct-empty-state"><h3>載入中...</h3></div>';
-      }
-    },
-
-    getFooter() {
-      switch (state.view) {
-        case 'token': return this.renderTokenFooter();
-        case 'query': return this.renderQueryFooter();
-        case 'result': return this.renderResultFooter();
-        default: return '';
-      }
-    },
-
-    renderTokenView() {
-      return `
-        <div>
-          <label class="pct-label">SSO Token</label>
-          <textarea class="pct-textarea" 
-                    id="token-input" 
-                    placeholder="請貼上您的 SSO Token..."
-                    ${state.loading ? 'disabled' : ''}>${state.token}</textarea>
-          <div class="pct-error-message" id="token-error"></div>
-        </div>
-      `;
-    },
-
-    renderTokenFooter() {
-      return `
-        <div></div>
-        <div style="display: flex; gap: 12px;">
-          <button class="pct-btn pct-btn-primary" 
-                  id="verify-btn" 
-                  ${state.loading ? 'disabled' : ''}>
-            ${state.loading ? '⏳ 驗證中...' : '驗證'}
-          </button>
-          <button class="pct-btn pct-btn-secondary" 
-                  id="skip-btn"
-                  ${state.loading ? 'disabled' : ''}>
-            略過
-          </button>
-        </div>
-      `;
-    },
-
-    renderQueryView() {
-      const modes = [
-        { id: 'code', title: '商品代號', desc: '輸入單筆或多筆商品代號' },
-        { id: 'name', title: '商品名稱', desc: '輸入商品名稱關鍵字搜尋' },
-        { id: 'channel', title: '通路銷售時間', desc: '查詢特定通路的銷售商品' },
-        { id: 'status', title: '依銷售狀態', desc: '查詢特定銷售狀態的商品' }
-      ];
-
-      const modeCards = modes.map(mode => `
-        <div class="pct-mode-card ${state.selectedMode === mode.id ? 'selected' : ''}" 
-             onclick="selectMode('${mode.id}')">
-          <h3>${mode.title}</h3>
-          <p>${mode.desc}</p>
-        </div>
-      `).join('');
-
-      const dynamicOptions = this.renderDynamicOptions();
-
-      return `
-        <div class="pct-mode-grid">
-          ${modeCards}
-        </div>
-        ${dynamicOptions}
-        <div class="pct-error-message" id="query-error"></div>
-      `;
-    },
-
-    renderDynamicOptions() {
-      if (!state.selectedMode) return '';
-
-      switch (state.selectedMode) {
-        case 'code':
-          return `
-            <div class="pct-dynamic-options">
-              <label class="pct-label">商品代號（多筆請用空格、逗號或換行分隔）</label>
-              <textarea class="pct-textarea" 
-                        id="code-input" 
-                        placeholder="例如：AALI BBLI CCLI&#10;或每行一個代號"></textarea>
-            </div>
-          `;
-        case 'name':
-          return `
-            <div class="pct-dynamic-options">
-              <label class="pct-label">商品名稱關鍵字</label>
-              <input type="text" 
-                     class="pct-input" 
-                     id="name-input" 
-                     placeholder="例如：健康、終身" />
-            </div>
-          `;
-        case 'channel':
-          return `
-            <div class="pct-dynamic-options">
-              <label class="pct-label">選擇通路（可多選）</label>
-              <div class="pct-option-grid">
-                ${['AG', 'BK', 'BR', 'WS'].map(ch => `
-                  <div class="pct-option-card ${(state.selectedOptions.channels || []).includes(ch) ? 'selected' : ''}"
-                       onclick="toggleChannelOption('${ch}')">
-                    ${ch}
-                  </div>
-                `).join('')}
-              </div>
-              <label class="pct-label" style="margin-top: 16px;">銷售範圍</label>
-              <div class="pct-option-grid">
-                ${[
-                  { id: 'current', label: '現售商品' },
-                  { id: 'all', label: '全部商品' }
-                ].map(opt => `
-                  <div class="pct-option-card ${state.selectedOptions.range === opt.id ? 'selected' : ''}"
-                       onclick="selectRangeOption('${opt.id}')">
-                    ${opt.label}
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-          `;
-        case 'status':
-          return `
-            <div class="pct-dynamic-options">
-              <label class="pct-label">選擇銷售狀態</label>
-              <div class="pct-option-grid">
-                ${[
-                  { id: 'onsale', label: '🟢 現售' },
-                  { id: 'stopped', label: '🔴 停售' },
-                  { id: 'notyet', label: '🔵 尚未開賣' },
-                  { id: 'error', label: '🟡 日期異常' }
-                ].map(status => `
-                  <div class="pct-option-card ${state.selectedOptions.status === status.id ? 'selected' : ''}"
-                       onclick="selectStatusOption('${status.id}')">
-                    ${status.label}
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-          `;
-        default:
-          return '';
-      }
-    },
-
-    renderQueryFooter() {
-      return `
-        <button class="pct-btn pct-btn-secondary" onclick="goBackToToken()">
-          修改 Token
-        </button>
-        <button class="pct-btn pct-btn-primary" 
-                id="start-query-btn"
-                ${this.canStartQuery() ? '' : 'disabled'}>
-          開始查詢
-        </button>
-      `;
-    },
-
-    canStartQuery() {
-      if (!state.selectedMode) return false;
-      
-      switch (state.selectedMode) {
-        case 'code':
-        case 'name':
-          return true; // 輸入驗證在點擊時進行
-        case 'channel':
-          return (state.selectedOptions.channels || []).length > 0 && state.selectedOptions.range;
-        case 'status':
-          return state.selectedOptions.status;
-        default:
-          return false;
-      }
-    },
-
-    renderResultView() {
-      const currentData = state.filteredData.length > 0 ? state.filteredData : state.data;
-      const paginatedData = this.getPaginatedData(currentData);
-
-      return `
-        ${state.loading ? this.renderProgress() : ''}
-        ${this.renderSearchAndFilters()}
-        <div class="pct-table-container">
-          ${this.renderTable(paginatedData)}
-        </div>
-      `;
-    },
-
-    renderProgress() {
-      return `
-        <div class="pct-progress-container">
-          <div class="pct-progress-text">${state.progress.text}</div>
-          <div class="pct-progress-bar">
-            <div class="pct-progress-bar-fill" style="width: ${(state.progress.current / state.progress.total) * 100}%"></div>
-          </div>
-          <button class="pct-abort-btn" onclick="abortQuery()">中止查詢</button>
-        </div>
-      `;
-    },
-
-    renderSearchAndFilters() {
-      const statusFilters = state.selectedMode === 'channel' ? `
-        <div class="pct-filter-buttons">
-          ${['onsale', 'stopped', 'notyet', 'error'].map(status => `
-            <button class="pct-filter-btn ${state.statusFilters && state.statusFilters.includes(status) ? 'selected' : ''}"
-                    onclick="toggleStatusFilter('${status}')">
-              ${this.getStatusLabel(status)}
-            </button>
-          `).join('')}
-        </div>
-      ` : '';
-
-      return `
-        <div class="pct-search-container">
-          <input type="text" 
-                 class="pct-input pct-search-input" 
-                 id="search-input"
-                 placeholder="🔍 搜尋表格內容..."
-                 value="${state.searchKeyword}" />
-          ${statusFilters}
-        </div>
-      `;
-    },
-
-    renderTable(data) {
-      if (!data.length) {
-        return `
-          <div class="pct-empty-state">
-            <h3>📭 查無資料</h3>
-            <p>請調整搜尋條件或重新查詢</p>
-          </div>
-        `;
-      }
-
-      const headers = this.getTableHeaders().map(col => `
-        <th class="sortable ${state.sortField === col.id ? `sort-${state.sortDirection}` : ''}"
-            onclick="sortTable('${col.id}')">
-          ${col.label}
-        </th>
-      `).join('');
-
-      const rows = data.map(row => {
-        const isSpecial = this.isSpecialRow(row);
-        const isReloadable = this.isReloadableRow(row);
+        const preloadPromise = DataModule.fetchAllBaseData(controller.signal)
+            .then(() => {
+                UIModule.Toast.show('背景資料已就緒', 'success', 2000);
+            })
+            .catch(error => {
+                if (error.name !== 'AbortError') {
+                    console.error("背景預載資料失敗:", error);
+                    UIModule.Toast.show(`背景資料載入失敗: ${error.message}`, 'error', 5000);
+                }
+            })
+            .finally(() => {
+                StateModule.set({ isPreloading: false, currentQueryController: null });
+            });
         
-        return `
-          <tr class="${isSpecial ? 'pct-special-row' : ''} ${isReloadable ? 'pct-reload-row' : ''}"
-              ${isSpecial ? `title="${this.getSpecialReason(row)}"` : ''}
-              ${isReloadable ? `onclick="reloadRowData('${row.planCode}')"` : ''}>
-            ${this.renderTableCells(row)}
-          </tr>
-        `;
-      }).join('');
-
-      return `
-        <table class="pct-table">
-          <thead>
-            <tr>${headers}</tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
-    },
-
-    getTableHeaders() {
-      return [
-        { id: 'no', label: '#' },
-        { id: 'planCode', label: '代號' },
-        { id: 'shortName', label: '名稱' },
-        { id: 'currency', label: '幣別' },
-        { id: 'unit', label: '單位' },
-        { id: 'coverageType', label: '類型' },
-        { id: 'saleStartDate', label: '銷售起日' },
-        { id: 'saleEndDate', label: '銷售迄日' },
-        { id: 'mainStatus', label: '狀態' },
-        { id: 'channels', label: '銷售通路' }
-      ];
-    },
-
-    renderTableCells(row) {
-      return this.getTableHeaders().map(col => {
-        let value = row[col.id] || '';
-        let className = '';
-        let onClick = '';
-
-        // 特殊欄位處理
-        if (col.id === 'planCode') {
-          className = 'pct-monospace';
-        } else if (col.id === 'mainStatus') {
-          value = this.renderStatusPill(row.mainStatus);
-        } else if (col.id === 'channels') {
-          value = this.renderChannels(row.channels);
-          onClick = ''; // 通路欄位不可複製
-        }
-
-        // 一般欄位可複製
-        if (col.id !== 'channels' && col.id !== 'mainStatus') {
-          onClick = `onclick="copyCell('${value}')"`;
-        }
-
-        return `<td class="${className}" ${onClick}>${value}</td>`;
-      }).join('');
-    },
-
-    renderStatusPill(status) {
-      const labels = {
-        onsale: '🟢 現售',
-        stopped: '🔴 停售',
-        notyet: '🔵 尚未開賣',
-        error: '🟡 日期異常'
-      };
-      return `<span class="pct-status-pill pct-status-${status}">${labels[status] || status}</span>`;
-    },
-
-    renderChannels(channels) {
-      if (!channels || !channels.length) return '';
-      
-      const active = channels.filter(ch => ch.status === 'onsale');
-      const inactive = channels.filter(ch => ch.status !== 'onsale');
-      
-      const activeHTML = active.map(ch => 
-        `<span class="pct-channel-active"
-               onmouseover="showChannelTooltip(event, '${ch.channel} (現售): ${ch.saleStartDate}-${ch.saleEndDate}')"
-               onmouseout="hideChannelTooltip()">${ch.channel}</span>`
-      ).join('');
-      
-      const inactiveHTML = inactive.map(ch => 
-        `<span class="pct-channel-inactive"
-               onmouseover="showChannelTooltip(event, '${ch.channel} (${this.getStatusLabel(ch.status)}): ${ch.saleStartDate}-${ch.saleEndDate}')"
-               onmouseout="hideChannelTooltip()">${ch.channel}</span>`
-      ).join('');
-      
-      const separator = active.length && inactive.length ? '<span class="pct-channel-separator">|</span>' : '';
-      
-      return `<div class="pct-channels">${activeHTML}${separator}${inactiveHTML}</div>`;
-    },
-
-    renderResultFooter() {
-      const currentData = state.filteredData.length > 0 ? state.filteredData : state.data;
-      state.totalPages = Math.ceil(currentData.length / state.pageSize);
-
-      return `
-        <div style="display: flex; gap: 12px; align-items: center;">
-          <button class="pct-btn pct-btn-small pct-btn-secondary" 
-                  onclick="togglePageMode()">
-            ${state.onePageMode ? '分頁顯示' : '一頁顯示'}
-          </button>
-          <button class="pct-btn pct-btn-small pct-btn-warning ${state.specialOnly ? 'selected' : ''}" 
-                  onclick="toggleSpecialFilter()">
-            篩選特殊
-          </button>
-        </div>
-
-        <div class="pct-pagination">
-          <button onclick="changePage(${state.currentPage - 1})" 
-                  ${state.currentPage <= 1 || state.onePageMode ? 'disabled' : ''}>◀</button>
-          <span>${state.onePageMode ? '全部' : `${state.currentPage} / ${state.totalPages}`}</span>
-          <button onclick="changePage(${state.currentPage + 1})" 
-                  ${state.currentPage >= state.totalPages || state.onePageMode ? 'disabled' : ''}>▶</button>
-        </div>
-
-        <div style="display: flex; gap: 12px;">
-          <button class="pct-btn pct-btn-success" onclick="copyAllData()">
-            一鍵複製
-          </button>
-          <button class="pct-btn pct-btn-primary" onclick="goBackToQuery()">
-            重新查詢
-          </button>
-        </div>
-      `;
-    },
-
-    getPaginatedData(data) {
-      if (state.onePageMode) return data;
-      
-      const start = (state.currentPage - 1) * state.pageSize;
-      const end = start + state.pageSize;
-      return data.slice(start, end);
-    },
-
-    isSpecialRow(row) {
-      // 判斷是否為特殊狀態列的邏輯
-      return row.specialReason && row.specialReason.length > 0;
-    },
-
-    isReloadableRow(row) {
-      // 判斷是否可重載的邏輯
-      return row._needsReload || false;
-    },
-
-    getSpecialReason(row) {
-      return row.specialReason || '';
-    },
-
-    getStatusLabel(status) {
-      const labels = {
-        onsale: '現售',
-        stopped: '停售',
-        notyet: '尚未開賣',
-        error: '日期異常'
-      };
-      return labels[status] || status;
-    },
-
-    bindEvents() {
-      // 拖拽功能
-      const header = shadow.querySelector('#modal-header');
-      if (header) {
-        header.addEventListener('mousedown', (e) => {
-          isDragging = true;
-          const rect = container.getBoundingClientRect();
-          dragOffset.x = e.clientX - rect.left;
-          dragOffset.y = e.clientY - rect.top;
-          document.addEventListener('mousemove', handleDrag);
-          document.addEventListener('mouseup', stopDrag);
-        });
-      }
-
-      // Token 相關事件
-      const verifyBtn = shadow.querySelector('#verify-btn');
-      const skipBtn = shadow.querySelector('#skip-btn');
-      const tokenInput = shadow.querySelector('#token-input');
-
-      if (verifyBtn) {
-        verifyBtn.addEventListener('click', handleTokenVerify);
-      }
-      if (skipBtn) {
-        skipBtn.addEventListener('click', handleTokenSkip);
-      }
-      if (tokenInput) {
-        tokenInput.addEventListener('keypress', (e) => {
-          if (e.key === 'Enter' && e.ctrlKey) {
-            handleTokenVerify();
-          }
-        });
-      }
-
-      // 查詢相關事件
-      const startQueryBtn = shadow.querySelector('#start-query-btn');
-      if (startQueryBtn) {
-        startQueryBtn.addEventListener('click', handleStartQuery);
-      }
-
-      // 各種輸入事件
-      const inputs = ['code-input', 'name-input'];
-      inputs.forEach(id => {
-        const input = shadow.querySelector(`#${id}`);
-        if (input) {
-          input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-              handleStartQuery();
-            }
-          });
-        }
-      });
-
-      // 搜尋事件
-      const searchInput = shadow.querySelector('#search-input');
-      if (searchInput) {
-        let searchTimeout;
-        searchInput.addEventListener('input', (e) => {
-          clearTimeout(searchTimeout);
-          searchTimeout = setTimeout(() => {
-            handleSearch(e.target.value);
-          }, 1000); // 1秒延遲
-        });
-      }
-
-      // ESC 鍵關閉
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          closeTool();
-        }
-      });
-    }
-  };
-
-  // 事件處理函式
-  function handleDrag(e) {
-    if (!isDragging) return;
-    const x = e.clientX - dragOffset.x;
-    const y = e.clientY - dragOffset.y;
-    container.style.left = Math.max(0, Math.min(x, window.innerWidth - container.offsetWidth)) + 'px';
-    container.style.top = Math.max(0, Math.min(y, window.innerHeight - container.offsetHeight)) + 'px';
-  }
-
-  function stopDrag() {
-    isDragging = false;
-    document.removeEventListener('mousemove', handleDrag);
-    document.removeEventListener('mouseup', stopDrag);
-  }
-
-  async function handleTokenVerify() {
-    const tokenInput = shadow.querySelector('#token-input');
-    const token = tokenInput.value.trim();
+        // 將 promise 存入 state，以便後續等待
+        StateModule.set({ preloadPromise });
+    };
     
-    if (!token) {
-      showError('token-error', '請輸入 Token');
-      return;
-    }
+    const showTokenDialog = () => {
+        const { env } = StateModule.get();
+        const modalContent = [ UIModule.createElement('div', { className: 'pct-modal-header', textContent: `設定 Token (${env})` }), UIModule.createElement('button', { className: 'pct-modal-close-btn', textContent: '×' }), UIModule.createElement('div', { className: 'pct-modal-body', children: [ UIModule.createElement('div', { className: 'pct-form-group', children: [ UIModule.createElement('label', { htmlFor: 'pct-token-input', textContent: '請貼上您的 SSO-TOKEN 或 euisToken：' }), UIModule.createElement('textarea', { id: 'pct-token-input', className: 'pct-input', rows: 4, placeholder: '(使用者在此貼上 Token...)' }), UIModule.createElement('span', { id: 'token-error', className: 'pct-error' }) ] }) ] }), UIModule.createElement('div', { className: 'pct-modal-footer', children: [ UIModule.createElement('div', { className: 'pct-modal-footer-left' }), UIModule.createElement('div', { className: 'pct-modal-footer-right', children: [ UIModule.createElement('button', { id: 'pct-skip-verification', className: 'pct-btn pct-btn-outline', textContent: '略過' }), UIModule.createElement('button', { id: 'pct-verify-token', className: 'pct-btn', textContent: '驗證並初始化' }) ] }) ] }) ];
+        UIModule.Modal.show(modalContent, (modal) => {
+            modal.setAttribute('data-size', 'query');
+            const tokenInput = document.getElementById('pct-token-input');
+            const verifyBtn = document.getElementById('pct-verify-token');
+            const skipBtn = document.getElementById('pct-skip-verification');
+            const handleVerifyToken = async () => { const token = tokenInput.value.trim(); if (!token) { UIModule.showError('請輸入 Token', 'token-error'); return; } UIModule.hideError('token-error'); verifyBtn.disabled = true; verifyBtn.textContent = '驗證中...'; try { if (await ApiModule.verifyToken(token)) { StateModule.set({ token }); UIModule.Toast.show('Token 驗證成功', 'success'); proceedToQueryScreen(); } else { UIModule.showError('Token 驗證失敗，請檢查後重試', 'token-error'); } } catch (error) { UIModule.showError(`驗證過程中發生錯誤: ${error.message}`, 'token-error'); } finally { verifyBtn.disabled = false; verifyBtn.textContent = '驗證並初始化'; } };
+            const handleSkipVerification = () => { const token = tokenInput.value.trim(); StateModule.set({ token, tokenCheckEnabled: false }); UIModule.Toast.show('已略過驗證', 'warning'); proceedToQueryScreen(); };
+            verifyBtn.onclick = handleVerifyToken; skipBtn.onclick = handleSkipVerification; tokenInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.ctrlKey) handleVerifyToken(); });
+        });
+    };
 
-    state.loading = true;
-    hideError('token-error');
-    renderer.render();
-
-    try {
-      // 這裡放置 Token 驗證邏輯
-      await new Promise(resolve => setTimeout(resolve, 1000)); // 模擬 API 呼叫
-      
-      state.token = token;
-      state.view = 'query';
-      utils.showToast('Token 驗證成功', 'success');
-    } catch (error) {
-      showError('token-error', 'Token 驗證失敗，請檢查後重試');
-    } finally {
-      state.loading = false;
-      renderer.render();
-    }
-  }
-
-  function handleTokenSkip() {
-    const tokenInput = shadow.querySelector('#token-input');
-    state.token = tokenInput ? tokenInput.value.trim() : '';
-    state.view = 'query';
-    utils.showToast('已略過驗證', 'warning');
-    renderer.render();
-  }
-
-  async function handleStartQuery() {
-    // 驗證輸入
-    const validation = validateQueryInput();
-    if (!validation.valid) {
-      showError('query-error', validation.message);
-      return;
-    }
-
-    hideError('query-error');
+    const showQueryDialog = () => {
+        StateModule.resetQueryState();
+        const { env, lastQuery } = StateModule.get();
+        const modalContent = [ UIModule.createElement('div', { className: 'pct-modal-header', textContent: `選擇查詢條件 (${env})` }), UIModule.createElement('button', { className: 'pct-modal-close-btn', textContent: '×' }), UIModule.createElement('div', { className: 'pct-modal-body', children: [ UIModule.createElement('div', { className: 'pct-form-group', children: [ UIModule.createElement('label', { textContent: '查詢模式:' }), UIModule.createElement('div', { className: 'pct-mode-card-grid', children: [ UIModule.createElement('div', { className: 'pct-mode-card', textContent: '商品代號', dataset: { mode: ConfigModule.QUERY_MODES.PLAN_CODE } }), UIModule.createElement('div', { className: 'pct-mode-card', textContent: '商品名稱', dataset: { mode: ConfigModule.QUERY_MODES.PLAN_NAME } }), UIModule.createElement('div', { className: 'pct-mode-card', textContent: '商品銷售時間', dataset: { mode: ConfigModule.QUERY_MODES.MASTER_CLASSIFIED } }), UIModule.createElement('div', { className: 'pct-mode-card', textContent: '通路銷售時間', dataset: { mode: ConfigModule.QUERY_MODES.CHANNEL_CLASSIFIED } }) ] }), UIModule.createElement('div', { id: 'pct-dynamic-options', style: { display: 'none' } }), UIModule.createElement('span', { id: 'query-error', className: 'pct-error' }) ] }) ] }), UIModule.createElement('div', { className: 'pct-modal-footer', children: [ UIModule.createElement('div', { className: 'pct-modal-footer-left', children: [ UIModule.createElement('button', { id: 'pct-change-token', className: 'pct-btn pct-btn-outline', textContent: '修改 Token' }) ] }), UIModule.createElement('div', { className: 'pct-modal-footer-right', children: [ UIModule.createElement('button', { id: 'pct-start-query', className: 'pct-btn', textContent: '開始查詢', disabled: true }) ] }) ] }) ];
+        UIModule.Modal.show(modalContent, (modal) => {
+            modal.setAttribute('data-size', 'query');
+            const modeCards = modal.querySelectorAll('.pct-mode-card');
+            const dynamicOptions = document.getElementById('pct-dynamic-options');
+            const startQueryBtn = document.getElementById('pct-start-query');
+            const updateDynamicOptions = (mode) => {
+                let contentElements = []; dynamicOptions.innerHTML = '';
+                const lastInput = (mode === ConfigModule.QUERY_MODES.PLAN_CODE || mode === ConfigModule.QUERY_MODES.PLAN_NAME) ? lastQuery.queryInput : '';
+                switch (mode) {
+                    case ConfigModule.QUERY_MODES.PLAN_CODE: contentElements = [ UIModule.createElement('label', { htmlFor: 'pct-query-input', textContent: '商品代碼：(多筆可用空格、逗號或換行分隔)' }), UIModule.createElement('textarea', { id: 'pct-query-input', className: 'pct-input', rows: 4, value: lastInput }) ]; break;
+                    case ConfigModule.QUERY_MODES.PLAN_NAME: contentElements = [ UIModule.createElement('label', { htmlFor: 'pct-query-input', textContent: '商品名稱關鍵字：' }), UIModule.createElement('input', { type: 'text', id: 'pct-query-input', className: 'pct-input', value: lastInput }) ]; break;
+                    case ConfigModule.QUERY_MODES.MASTER_CLASSIFIED: contentElements = [ UIModule.createElement('label', { textContent: '主約銷售狀態：' }), UIModule.createElement('div', { className: 'pct-sub-option-grid', children: Object.values(ConfigModule.MASTER_STATUS_TYPES).map(s => UIModule.createElement('div', { className: `pct-sub-option ${lastQuery.masterStatusSelection.has(s) ? 'selected' : ''}`, textContent: s, dataset: { status: s } })) }) ]; break;
+                    case ConfigModule.QUERY_MODES.CHANNEL_CLASSIFIED: contentElements = [ UIModule.createElement('label', { textContent: '選擇通路：(可多選，不選代表全部)' }), UIModule.createElement('div', { className: 'pct-channel-option-grid', children: ConfigModule.FIELD_MAPS.CHANNELS.map(ch => UIModule.createElement('div', { className: `pct-channel-option ${lastQuery.channelSelection.has(ch) ? 'selected' : ''}`, textContent: ch, dataset: { channel: ch } })) }), UIModule.createElement('label', { textContent: '銷售範圍：', style: { marginTop: '10px' }}), UIModule.createElement('div', { className: 'pct-sub-option-grid', children: ['現售', '停售'].map(range => UIModule.createElement('div', { className: `pct-sub-option ${lastQuery.channelStatusSelection === range ? 'selected' : ''}`, textContent: `${range}商品`, dataset: { range: range } })) }) ]; break;
+                }
+                if (contentElements.length > 0) { contentElements.forEach(el => dynamicOptions.appendChild(el)); dynamicOptions.style.display = 'block'; bindDynamicEvents(); } else { dynamicOptions.style.display = 'none'; }
+                checkCanStartQuery();
+            };
+            const bindDynamicEvents = () => {
+                document.querySelectorAll('.pct-sub-option[data-status]').forEach(o => o.onclick = () => { o.classList.toggle('selected'); updateMasterStatusSelection(); checkCanStartQuery(); });
+                document.querySelectorAll('.pct-channel-option').forEach(o => o.onclick = () => { o.classList.toggle('selected'); updateChannelSelection(); checkCanStartQuery(); });
+                document.querySelectorAll('.pct-sub-option[data-range]').forEach(o => o.onclick = () => { const current = o.classList.contains('selected'); document.querySelectorAll('.pct-sub-option[data-range]').forEach(el => el.classList.remove('selected')); if (!current) { o.classList.add('selected'); StateModule.set({ channelStatusSelection: o.dataset.range }); } else { StateModule.set({ channelStatusSelection: '' }); } checkCanStartQuery(); });
+                const input = document.getElementById('pct-query-input'); if (input) { input.addEventListener('input', EventModule.autoFormatInput); input.addEventListener('input', checkCanStartQuery); }
+            };
+            const updateMasterStatusSelection = () => { const s = new Set(); document.querySelectorAll('.pct-sub-option[data-status].selected').forEach(o => s.add(o.dataset.status)); StateModule.set({ masterStatusSelection: s }); };
+            const updateChannelSelection = () => { const s = new Set(); document.querySelectorAll('.pct-channel-option.selected').forEach(o => s.add(o.dataset.channel)); StateModule.set({ channelSelection: s }); };
+            const checkCanStartQuery = () => { const state = StateModule.get(); let canStart = false; switch (state.queryMode) { case ConfigModule.QUERY_MODES.PLAN_CODE: case ConfigModule.QUERY_MODES.PLAN_NAME: const i = document.getElementById('pct-query-input'); canStart = i && i.value.trim() !== ''; break; case ConfigModule.QUERY_MODES.MASTER_CLASSIFIED: canStart = state.masterStatusSelection.size > 0; break; case ConfigModule.QUERY_MODES.CHANNEL_CLASSIFIED: canStart = state.channelStatusSelection !== ''; break; } startQueryBtn.disabled = !canStart; };
+            modeCards.forEach(card => card.onclick = () => { const currentScrollTop = modal.querySelector('.pct-modal-body').scrollTop; modeCards.forEach(c => c.classList.remove('selected')); card.classList.add('selected'); const mode = card.dataset.mode; StateModule.set({ queryMode: mode }); updateDynamicOptions(mode); modal.querySelector('.pct-modal-body').scrollTop = currentScrollTop; });
+            if (lastQuery.queryMode) { modal.querySelector(`.pct-mode-card[data-mode="${lastQuery.queryMode}"]`)?.click(); }
+            document.getElementById('pct-change-token').onclick = showTokenDialog;
+            startQueryBtn.onclick = handleStartQuery;
+        });
+    };
     
-    // 開始查詢
-    state.view = 'result';
-    state.loading = true;
-    state.data = [];
-    state.filteredData = [];
-    renderer.render();
-
-    try {
-      // 模擬批量查詢
-      const batches = Math.ceil(Math.random() * 5) + 1;
-      for (let i = 0; i < batches; i++) {
-        utils.updateProgress(i, batches, `批量查詢第 ${i + 1}/${batches} 批...`);
-        await new Promise(resolve => setTimeout(resolve, 500));
+    // 【修改】查詢處理流程，增加等待機制
+    const handleStartQuery = async () => {
+        const startQueryBtn = document.getElementById('pct-start-query');
+        const originalText = startQueryBtn.textContent;
+        UIModule.hideError('query-error');
         
-        // 添加模擬資料
-        const batchData = generateMockData(20);
-        state.data.push(...batchData);
-        renderer.render();
-      }
+        const { isPreloading, preloadPromise } = StateModule.get();
+        
+        // 如果背景正在預載，則等待它完成
+        if (isPreloading && preloadPromise) {
+            startQueryBtn.disabled = true;
+            startQueryBtn.textContent = '準備資料中...';
+            await preloadPromise;
+            startQueryBtn.textContent = originalText;
+            startQueryBtn.disabled = false;
+        }
+        
+        // 保存本次查詢條件
+        StateModule.backupQuery();
 
-      utils.updateProgress(batches, batches, '查詢完成');
-      utils.showToast(`查詢完成，找到 ${state.data.length} 筆資料`, 'success');
-      
+        const results = DataModule.queryLocalData();
+        StateModule.set({ currentResults: results });
+        showResultsDialog();
+    };
+
+    // ... showResultsDialog 和其餘函式保持不變 ...
+    const showResultsDialog = () => {
+        const state = StateModule.get(); const totalCount = state.currentResults.length;
+        const modalContent = [ UIModule.createElement('div', { className: 'pct-modal-header', textContent: `查詢結果 (${state.env})` }), UIModule.createElement('button', { className: 'pct-modal-close-btn', textContent: '×' }), UIModule.createElement('div', { className: 'pct-modal-body', children: [ UIModule.createElement('div', { style: { display: 'flex', flexDirection: 'column', height: '100%' }, children: [ UIModule.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexShrink: 0 }, children: [ UIModule.createElement('div', { style: { display: 'flex', gap: '8px', alignItems: 'center' }, children: [ UIModule.createElement('span', { style: { fontSize: '14px', color: '#666' }, textContent: '搜尋:' }), UIModule.createElement('input', { type: 'text', id: 'pct-search-input', style: { padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', width: '200px', fontSize: '13px' } }) ] }), UIModule.createElement('button', { id: 'pct-load-all-details', className: 'pct-btn pct-btn-outline', textContent: '載入全部 POLPLN', style: { padding: '5px 12px', fontSize: '14px' } }), UIModule.createElement('div', { id: 'pct-status-filters', style: { display: 'flex', gap: '5px' } }) ] }), UIModule.createElement('div', { className: 'pct-table-wrap', children: [ UIModule.createElement('table', { className: 'pct-table', children: [ UIModule.createElement('thead', { children: [ UIModule.createElement('tr', { children: [ UIModule.createElement('th', { dataset: { key: 'no' }, textContent: 'No' }), UIModule.createElement('th', { dataset: { key: 'planCode' }, textContent: '代號' }), UIModule.createElement('th', { dataset: { key: 'shortName' }, textContent: '名稱' }), UIModule.createElement('th', { dataset: { key: 'currency' }, textContent: '幣別' }), UIModule.createElement('th', { dataset: { key: 'unit' }, textContent: '單位' }), UIModule.createElement('th', { dataset: { key: 'coverageType' }, textContent: '類型' }), UIModule.createElement('th', { dataset: { key: 'saleStartDate' }, textContent: '主約銷售日' }), UIModule.createElement('th', { dataset: { key: 'saleEndDate' }, textContent: '主約停賣日' }), UIModule.createElement('th', { dataset: { key: 'mainStatus' }, textContent: '險種狀態' }), UIModule.createElement('th', { dataset: { key: 'polpln' }, textContent: '商品名稱(POLPLN)' }), UIModule.createElement('th', { textContent: '銷售通路' }), ] }) ] }), UIModule.createElement('tbody', { id: 'pct-table-body' }) ] }) ] }) ] }) ] }), UIModule.createElement('div', { className: 'pct-modal-footer', children: [ UIModule.createElement('div', { className: 'pct-modal-footer-left', children: [ UIModule.createElement('button', { id: 'pct-toggle-view', className: 'pct-btn pct-btn-outline', textContent: '一頁顯示' }), UIModule.createElement('button', { id: 'pct-filter-special', className: 'pct-btn pct-btn-outline', textContent: '篩選特殊' }) ] }), UIModule.createElement('div', { className: 'pct-modal-footer-center', children: [ UIModule.createElement('div', { className: 'pct-pagination', children: [ UIModule.createElement('button', { id: 'pct-prev-page', className: 'pct-btn pct-btn-outline', textContent: '◀' }), UIModule.createElement('span', { id: 'pct-page-info', className: 'pct-pagination-info' }), UIModule.createElement('button', { id: 'pct-next-page', className: 'pct-btn pct-btn-outline', textContent: '▶' }) ] }) ] }), UIModule.createElement('div', { className: 'pct-modal-footer-right', children: [ UIModule.createElement('button', { id: 'pct-copy-all', className: 'pct-btn pct-btn-secondary', textContent: '一鍵複製' }), UIModule.createElement('button', { id: 'pct-back-to-query', className: 'pct-btn', textContent: '重新查詢' }) ] }) ] }) ];
+        UIModule.Modal.show(modalContent, (modal) => {
+            modal.setAttribute('data-size', 'results'); modal.classList.add('pct-view-results');
+            setupResultsDialog(modal); rerenderTable();
+            UIModule.Toast.show(`查詢完成，共找到 ${totalCount} 筆資料`, 'success');
+            document.dispatchEvent(new CustomEvent('pct:resultsShown'));
+        });
+    };
+    const setupResultsDialog = (modal) => {
+        modal.addEventListener('click', (e) => {
+            const target = e.target; const row = target.closest('tr'); const planCode = row?.dataset.plancode;
+            if (target.id === 'pct-load-all-details') loadAllDetailsInBatches();
+            else if (target.id === 'pct-toggle-view') handleToggleView(target);
+            else if (target.id === 'pct-filter-special') handleFilterSpecial(target);
+            else if (target.id === 'pct-prev-page') handlePageChange(-1);
+            else if (target.id === 'pct-next-page') handlePageChange(1);
+            else if (target.id === 'pct-copy-all') copyAllResults();
+            else if (target.id === 'pct-back-to-query') showQueryDialog();
+            else if (target.closest('th[data-key]')) handleSort(target.closest('th[data-key]'));
+            else if (target.matches('.load-details-btn') && planCode) loadSingleDetail(planCode, target);
+            else if (target.matches('.clickable-cell') && planCode) { const cellValue = target.textContent.trim(); if (cellValue && cellValue !== '...' && cellValue !== '-') { UtilsModule.copyTextToClipboard(cellValue, UIModule.Toast.show); } }
+        });
+        const searchInput = document.getElementById('pct-search-input');
+        searchInput.addEventListener('input', () => { clearTimeout(StateModule.get().searchDebounceTimer); const timer = setTimeout(() => { StateModule.set({ searchKeyword: searchInput.value.trim(), pageNo: 1 }); rerenderTable(); }, ConfigModule.DEBOUNCE_DELAY.SEARCH); StateModule.set({ searchDebounceTimer: timer }); });
+    };
+    const getFilteredData = () => { const state = StateModule.get(); let data = [...state.currentResults]; if (state.searchKeyword) { const keyword = state.searchKeyword.toLowerCase(); data = data.filter(item => Object.values(item).some(value => String(value).toLowerCase().includes(keyword))); } if (state.filterSpecial) { data = data.filter(item => item.specialReason && item.specialReason.trim() !== ''); } data = DataModule.sortData(data, state.sortKey, state.sortAsc); return data; };
+    const rerenderTable = () => { const state = StateModule.get(); const filteredData = getFilteredData(); const totalItems = filteredData.length; let displayData = state.isFullView ? filteredData : filteredData.slice((state.pageNo - 1) * state.pageSize, state.pageNo * state.pageSize); const tableBody = document.getElementById('pct-table-body'); if (tableBody) { tableBody.innerHTML = ''; displayData.forEach(item => tableBody.appendChild(renderTableRow(item))); } updateSortIndicators(); updatePaginationInfo(totalItems); };
+    const renderTableRow = (item) => { const tr = UIModule.createElement('tr', { className: `${item.specialReason ? 'special-row' : ''}`, dataset: { plancode: item.planCode }, title: item.specialReason ? UtilsModule.escapeHtml(item.specialReason) : '' }); const renderStatusPill = (status) => `<span class="clickable-cell" style="display:inline-block;min-width:80px;text-align:center;padding:2px 6px;background:#f0f0f0;border-radius:12px;font-size:11px;">${status}</span>`; const renderPolplnCell = (item) => { if (item._loadingDetails) return UIModule.createElement('button', { className: 'load-details-btn', textContent: '載入' }); if (item.polplnError) return UIModule.createElement('span', { className: 'load-details-error', textContent: '載入失敗', title: item.polplnError }); return UIModule.createElement('span', { className: 'clickable-cell', textContent: UtilsModule.escapeHtml(item.polpln) }); }; const renderChannelsCell = (channels) => { if (!channels || channels.length === 0) return '-'; const active = channels.filter(c => c.status === ConfigModule.MASTER_STATUS_TYPES.IN_SALE).sort((a,b) => a.channel.localeCompare(b.channel)); const inactive = channels.filter(c => c.status !== ConfigModule.MASTER_STATUS_TYPES.IN_SALE).sort((a,b) => a.channel.localeCompare(b.channel)); const activeHTML = active.map(c => `<span class="pct-channel-insale" title="${c.channel} (${c.status}): ${c.saleStartDate}-${c.saleEndDate}">${c.channel}</span>`).join(' '); const inactiveHTML = inactive.map(c => `<span class="pct-channel-offsale" title="${c.channel} (${c.status}): ${c.saleStartDate}-${c.saleEndDate}">${c.channel}</span>`).join(' '); return activeHTML + (active.length > 0 && inactive.length > 0 ? '<span class="pct-channel-separator">|</span>' : '') + inactiveHTML; }; tr.innerHTML = `<td class="clickable-cell">${item.no}</td><td class="clickable-cell">${UtilsModule.escapeHtml(item.planCode)}</td><td class="clickable-cell" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${UtilsModule.escapeHtml(item.shortName)}">${UtilsModule.escapeHtml(item.shortName)}</td><td class="clickable-cell">${UtilsModule.escapeHtml(item.currency)}</td><td class="clickable-cell">${UtilsModule.escapeHtml(item.unit)}</td><td class="clickable-cell">${UtilsModule.escapeHtml(item.coverageType)}</td><td class="clickable-cell">${UtilsModule.escapeHtml(item.saleStartDate)}</td><td class="clickable-cell">${UtilsModule.escapeHtml(item.saleEndDate)}</td><td>${renderStatusPill(item.mainStatus)}</td><td></td><td>${renderChannelsCell(item.channels)}</td>`; tr.children[9].appendChild(renderPolplnCell(item)); return tr; };
+    const handleToggleView = (btn) => { const state = StateModule.get(); StateModule.set({ isFullView: !state.isFullView, pageNo: 1 }); btn.textContent = StateModule.get().isFullView ? '分頁顯示' : '一頁顯示'; rerenderTable(); };
+    const handleFilterSpecial = (btn) => { const state = StateModule.get(); StateModule.set({ filterSpecial: !state.filterSpecial, pageNo: 1 }); btn.classList.toggle('pct-btn-primary', StateModule.get().filterSpecial); rerenderTable(); };
+    const handlePageChange = (delta) => { const state = StateModule.get(); const filteredData = getFilteredData(); const maxPage = Math.ceil(filteredData.length / state.pageSize); const newPage = state.pageNo + delta; if (newPage >= 1 && newPage <= maxPage) { StateModule.set({ pageNo: newPage }); rerenderTable(); } };
+    const handleSort = (th) => { const key = th.dataset.key; const state = StateModule.get(); if (state.sortKey === key) { StateModule.set({ sortAsc: !state.sortAsc }); } else { StateModule.set({ sortKey: key, sortAsc: true }); } rerenderTable(); };
+    const updateSortIndicators = () => { const state = StateModule.get(); document.querySelectorAll('th[data-key]').forEach(th => { th.classList.remove('sort-asc', 'sort-desc'); if (th.dataset.key === state.sortKey) { th.classList.add(state.sortAsc ? 'sort-asc' : 'sort-desc'); } }); };
+    const updatePaginationInfo = (totalItems) => { const state = StateModule.get(); const pageInfo = document.getElementById('pct-page-info'); const prevBtn = document.getElementById('pct-prev-page'); const nextBtn = document.getElementById('pct-next-page'); if (state.isFullView) { pageInfo.textContent = `全部 ${totalItems} 筆`; prevBtn.style.display = 'none'; nextBtn.style.display = 'none'; } else { const maxPage = Math.ceil(totalItems / state.pageSize) || 1; pageInfo.textContent = `${state.pageNo} / ${maxPage}`; prevBtn.style.display = 'inline-flex'; nextBtn.style.display = 'inline-flex'; prevBtn.disabled = state.pageNo <= 1; nextBtn.disabled = state.pageNo >= maxPage; } };
+    const loadSingleDetail = async (planCode, btn) => { const item = StateModule.get().currentResults.find(d => d.planCode === planCode); if (!item || !item._loadingDetails) return; btn.textContent = '載入中...'; btn.disabled = true; const controller = new AbortController(); try { const polpln = await DataModule.getPolplnData(planCode, controller.signal); item.polpln = polpln; } catch (error) { if (error.name !== 'AbortError') { item.polplnError = error.message; UIModule.Toast.show(`載入 POLPLN 失敗: ${error.message}`, 'error'); } } finally { item._loadingDetails = false; rerenderTable(); } };
+    const loadAllDetailsInBatches = async () => { const state = StateModule.get(); const itemsToLoad = state.currentResults.filter(item => item._loadingDetails && !item._isErrorRow); if (itemsToLoad.length === 0) { UIModule.Toast.show('所有 POLPLN 資料均已載入', 'info'); return; } const BATCH_SIZE = ConfigModule.BATCH_SIZES.DETAIL_LOAD; const controller = new AbortController(); StateModule.set({ currentQueryController: controller }); UIModule.Toast.show(`開始批次載入 ${itemsToLoad.length} 筆 POLPLN...`, 'info'); try { for (let i = 0; i < itemsToLoad.length; i += BATCH_SIZE) { const batch = itemsToLoad.slice(i, i + BATCH_SIZE); await Promise.all(batch.map(async item => { try { item.polpln = await DataModule.getPolplnData(item.planCode, controller.signal); } catch (err) { item.polplnError = err.message; } finally { item._loadingDetails = false; } })); rerenderTable(); if (i + BATCH_SIZE < itemsToLoad.length) { await new Promise(resolve => setTimeout(resolve, 200)); } } UIModule.Toast.show('POLPLN 批次載入完成', 'success'); } catch (error) { if (error.name !== 'AbortError') { console.error("POLPLN 批次載入失敗:", error); UIModule.Toast.show(`批次載入失敗: ${error.message}`, 'error'); } } finally { StateModule.set({ currentQueryController: null }); } };
+    const copyAllResults = () => { const filteredData = getFilteredData(); if (filteredData.length === 0) { UIModule.Toast.show('無資料可複製', 'warning'); return; } const headers = ['No', '代號', '名稱', '幣別', '單位', '類型', '主約銷售日', '主約停賣日', '險種狀態', '商品名稱(POLPLN)', '銷售通路']; const rows = filteredData.map(item => [item.no, item.planCode, item.shortName, item.currency, item.unit, item.coverageType, item.saleStartDate, item.saleEndDate, item.mainStatus, item.polpln, item.channels.map(ch => ch.channel).join(' ')]); const tsvContent = [headers, ...rows].map(row => row.join('\t')).join('\n'); UtilsModule.copyTextToClipboard(tsvContent, UIModule.Toast.show); };
+    return { initialize, showTokenDialog, showQueryDialog, showResultsDialog, rerenderTable };
+  })();
+
+  /**
+   * 工具初始化入口
+   */
+  const initializeTool = () => {
+    try {
+      document.addEventListener('pct:resultsShown', () => {
+          setTimeout(() => {
+              const itemsToLoad = StateModule.get().currentResults.filter(item => item._loadingDetails && !item._isErrorRow);
+              if (itemsToLoad.length > 50) { UIModule.Toast.show(`發現 ${itemsToLoad.length} 筆 POLPLN 待載入，建議手動點擊按鈕載入。`, 'info', 5000);
+              } else if (itemsToLoad.length > 0) {
+                // 自動觸發批次載入
+                const loadBtn = document.getElementById('pct-load-all-details');
+                if(loadBtn) loadBtn.click();
+              }
+          }, 1000);
+      }, { once: true });
+      ControllerModule.initialize();
     } catch (error) {
-      utils.showToast('查詢失敗', 'error');
-    } finally {
-      state.loading = false;
-      renderer.render();
-    }
-  }
-
-  function validateQueryInput() {
-    if (!state.selectedMode) {
-      return { valid: false, message: '請選擇查詢模式' };
-    }
-
-    switch (state.selectedMode) {
-      case 'code':
-        const codeInput = shadow.querySelector('#code-input');
-        if (!codeInput || !codeInput.value.trim()) {
-          return { valid: false, message: '請輸入商品代號' };
-        }
-        break;
-      case 'name':
-        const nameInput = shadow.querySelector('#name-input');
-        if (!nameInput || !nameInput.value.trim()) {
-          return { valid: false, message: '請輸入商品名稱關鍵字' };
-        }
-        break;
-      case 'channel':
-        if (!(state.selectedOptions.channels && state.selectedOptions.channels.length > 0)) {
-          return { valid: false, message: '請至少選擇一個通路' };
-        }
-        if (!state.selectedOptions.range) {
-          return { valid: false, message: '請選擇銷售範圍' };
-        }
-        break;
-      case 'status':
-        if (!state.selectedOptions.status) {
-          return { valid: false, message: '請選擇銷售狀態' };
-        }
-        break;
-    }
-
-    return { valid: true };
-  }
-
-  function handleSearch(keyword) {
-    state.searchKeyword = keyword;
-    
-    if (!keyword.trim()) {
-      state.filteredData = [];
-    } else {
-      state.filteredData = state.data.filter(row =>
-        Object.values(row).some(value =>
-          String(value).toLowerCase().includes(keyword.toLowerCase())
-        )
-      );
-    }
-    
-    state.currentPage = 1;
-    renderer.render();
-  }
-
-  // 模擬資料生成
-  function generateMockData(count) {
-    const data = [];
-    for (let i = 0; i < count; i++) {
-      const statuses = ['onsale', 'stopped', 'notyet', 'error'];
-      const channels = ['AG', 'BK', 'BR', 'WS'];
-      const status = statuses[Math.floor(Math.random() * statuses.length)];
-      
-      data.push({
-        no: state.data.length + i + 1,
-        planCode: 'TEST' + String(1000 + state.data.length + i),
-        shortName: `測試商品 ${state.data.length + i + 1}`,
-        currency: 'TWD',
-        unit: '萬元',
-        coverageType: Math.random() > 0.5 ? '主約' : '附約',
-        saleStartDate: '20230101',
-        saleEndDate: '20241231',
-        mainStatus: status,
-        channels: channels.slice(0, Math.floor(Math.random() * 3) + 1).map(ch => ({
-          channel: ch,
-          status: Math.random() > 0.3 ? 'onsale' : 'stopped',
-          saleStartDate: '20230101',
-          saleEndDate: '20241231'
-        })),
-        specialReason: Math.random() > 0.8 ? '主約已停售，但部分通路仍在售' : '',
-        _needsReload: Math.random() > 0.7
-      });
-    }
-    return data;
-  }
-
-  // 輔助函式
-  function showError(elementId, message) {
-    const errorElement = shadow.querySelector(`#${elementId}`);
-    if (errorElement) {
-      errorElement.textContent = message;
-      errorElement.classList.add('show');
-    }
-  }
-
-  function hideError(elementId) {
-    const errorElement = shadow.querySelector(`#${elementId}`);
-    if (errorElement) {
-      errorElement.classList.remove('show');
-    }
-  }
-
-  // 全域函式
-  window.closeTool = () => {
-    document.body.removeChild(maskElement);
-    window.__PRODUCT_QUERY_TOOL__ = false;
-  };
-
-  window.selectMode = (modeId) => {
-    state.selectedMode = modeId;
-    state.selectedOptions = {};
-    renderer.render();
-  };
-
-  window.toggleChannelOption = (channel) => {
-    if (!state.selectedOptions.channels) {
-      state.selectedOptions.channels = [];
-    }
-    
-    const index = state.selectedOptions.channels.indexOf(channel);
-    if (index > -1) {
-      state.selectedOptions.channels.splice(index, 1);
-    } else {
-      state.selectedOptions.channels.push(channel);
-    }
-    
-    renderer.render();
-  };
-
-  window.selectRangeOption = (range) => {
-    state.selectedOptions.range = range;
-    renderer.render();
-  };
-
-  window.selectStatusOption = (status) => {
-    state.selectedOptions.status = status;
-    renderer.render();
-  };
-
-  window.goBackToToken = () => {
-    state.view = 'token';
-    renderer.render();
-  };
-
-  window.goBackToQuery = () => {
-    state.view = 'query';
-    state.data = [];
-    state.filteredData = [];
-    renderer.render();
-  };
-
-  window.copyCell = (value) => {
-    utils.copyToClipboard(value);
-  };
-
-  window.copyAllData = () => {
-    const currentData = state.filteredData.length > 0 ? state.filteredData : state.data;
-    const headers = renderer.getTableHeaders().map(h => h.label);
-    const rows = currentData.map(row => 
-      renderer.getTableHeaders().map(col => {
-        if (col.id === 'channels') {
-          return row.channels.map(ch => ch.channel).join(' ');
-        }
-        return row[col.id] || '';
-      })
-    );
-    
-    const text = [headers, ...rows].map(row => row.join('\t')).join('\n');
-    utils.copyToClipboard(text);
-  };
-
-  window.sortTable = (field) => {
-    const direction = state.sortField === field && state.sortDirection === 'asc' ? 'desc' : 'asc';
-    const currentData = state.filteredData.length > 0 ? state.filteredData : state.data;
-    
-    currentData.sort((a, b) => {
-      let aVal = a[field] || '';
-      let bVal = b[field] || '';
-      
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return direction === 'asc' ? aVal - bVal : bVal - aVal;
-      }
-      
-      return direction === 'asc' 
-        ? String(aVal).localeCompare(String(bVal))
-        : String(bVal).localeCompare(String(aVal));
-    });
-
-    state.sortField = field;
-    state.sortDirection = direction;
-    renderer.render();
-  };
-
-  window.changePage = (page) => {
-    if (page >= 1 && page <= state.totalPages) {
-      state.currentPage = page;
-      renderer.render();
+      console.error('工具初始化失敗:', error);
+      alert(`工具初始化失敗: ${error.message}`);
     }
   };
 
-  window.togglePageMode = () => {
-    state.onePageMode = !state.onePageMode;
-    state.currentPage = 1;
-    renderer.render();
-  };
-
-  window.toggleSpecialFilter = () => {
-    state.specialOnly = !state.specialOnly;
-    
-    if (state.specialOnly) {
-      state.filteredData = state.data.filter(row => renderer.isSpecialRow(row));
-    } else {
-      state.filteredData = [];
-    }
-    
-    state.currentPage = 1;
-    renderer.render();
-  };
-
-  window.showChannelTooltip = (event, text) => {
-    utils.createTooltip(text, event.pageX, event.pageY);
-  };
-
-  window.hideChannelTooltip = () => {
-    utils.hideTooltip();
-  };
-
-  window.reloadRowData = (planCode) => {
-    utils.showToast(`重新載入 ${planCode} 的資料...`, 'info');
-    // 這裡放置重載邏輯
-  };
-
-  window.abortQuery = () => {
-    state.loading = false;
-    utils.showToast('查詢已中止', 'warning');
-    renderer.render();
-  };
-
-  // 初始化
-  const tokenResult = utils.extractToken();
-  if (tokenResult) {
-    state.token = tokenResult.token;
-    state.autoDetected = true;
-    state.view = 'query';
-    utils.showToast(`已自動偵測到 Token (${tokenResult.source})`, 'info');
-  }
-
-  renderer.render();
+  // 啟動工具
+  initializeTool();
 
 })();
